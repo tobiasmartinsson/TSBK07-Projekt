@@ -28,13 +28,13 @@ return model;
 }*/
 
 GLfloat groundMatrix[] = {
-	-10, 0, 10,
-	-10, 0, 0,
-	10, 0, 0,
+	-0.5, 0, 0.5,
+	-0.5, 0, -0.5,
+	0.5, 0, -0.5,
 
-	10, 0, 0,
-	-10, 0, 10,
-	10, 0, 10
+	0.5, 0, -0.5,
+	-0.5, 0, 0.5,
+	0.5, 0, 0.5
 };
 
 GLfloat groundTextureCoord[]={
@@ -69,6 +69,8 @@ mat4 camTrans;
 
 mat4 groundTransform;
 
+GLuint groundTex;
+
 
 // vertex array object
 unsigned int vertexArrayObjID;
@@ -85,15 +87,18 @@ void init(void)
 	glDisable(GL_CULL_FACE);
 	printError("GL inits");
 
+	LoadTGATextureSimple("grass.tga", &groundTex);
+
 	projectionMatrix = frustum(-0.1, 0.1, -0.1, 0.1, 0.2, 50.0);
 	angleY= 0.0f;
 	angleX = 0.0f;
 	camTrans = T(0,0,0);
 
 	// Load and compile shader
-	program = loadShaders("terrain.vert", "terrain.frag");
+	program = loadShaders("main_project.vert", "main_project.frag");
 	glUseProgram(program);
 	printError("init shader");
+
 
 
 
@@ -110,6 +115,11 @@ void init(void)
 	glGenBuffers(1, &vertexBufferObjID);
 	glGenBuffers(1, &groundNormalBufferObjID);
 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, groundTex);
+	glUniform1i(glGetUniformLocation(program, "texUnit"), 0); // Texture unit 0
+	glGenBuffers(1, &groundTexCoordBufferObjID);  //TEXTURE
+
 	// VBO for vertex data
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjID);
 	//glBufferData(GL_ARRAY_BUFFER, 9*sizeof(GLfloat), vertices, GL_STATIC_DRAW);
@@ -117,10 +127,10 @@ void init(void)
 	glVertexAttribPointer(glGetAttribLocation(program, "inPosition"), 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(glGetAttribLocation(program, "inPosition"));
 
-/*	glBindBuffer(GL_ARRAY_BUFFER, groundTexCoordBufferObjID);
+	glBindBuffer(GL_ARRAY_BUFFER, groundTexCoordBufferObjID);
 	glBufferData(GL_ARRAY_BUFFER,6*2*sizeof(GLfloat), groundTextureCoord, GL_STATIC_DRAW);
 	glVertexAttribPointer(glGetAttribLocation(program, "inTexCoord"), 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(glGetAttribLocation(program, "inTexCoord"));*/
+	glEnableVertexAttribArray(glGetAttribLocation(program, "inTexCoord"));
 
 	glBindBuffer(GL_ARRAY_BUFFER, groundNormalBufferObjID);
 	glBufferData(GL_ARRAY_BUFFER, 3*6*sizeof(GLfloat), groundNormal, GL_STATIC_DRAW);
@@ -161,7 +171,6 @@ void display(void)
 
 		groundTransform = IdentityMatrix();
 
-		groundTransform = Mult(S(2,1,2),groundTransform);
 		//groundTransform = Mult(Rx(M_PI/2), groundTransform);
 		groundTransform = Mult(T(0,-5,-2),groundTransform);
 		groundTransform = Mult(camMatrix, groundTransform);
