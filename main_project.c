@@ -183,35 +183,35 @@ void display(void)
 	}
 
 	void moveCamera(){
-		if(glutKeyIsDown('w')){
+		if(glutKeyIsDown('i')){
 			//camMatrix = Mult(Rx(0.1),camMatrix);
 			angleX -= 0.01;
 		}
-		if(glutKeyIsDown('s')){
+		if(glutKeyIsDown('k')){
 			//camMatrix = Mult(Rx(-0.1),camMatrix);
 			angleX += 0.01;
 		}
-		if(glutKeyIsDown('a')){
+		if(glutKeyIsDown('j')){
 			//camMatrix = Mult(Ry(-0.1),camMatrix);
-			angleY-= 0.01;
-		}
-		if(glutKeyIsDown('d')){
-			//camMatrix = Mult(Ry(0.1),camMatrix,);
 			angleY+= 0.01;
 		}
-		if(glutKeyIsDown('i')){
+		if(glutKeyIsDown('l')){
+			//camMatrix = Mult(Ry(0.1),camMatrix,);
+			angleY-= 0.01;
+		}
+		if(glutKeyIsDown('w')){
 			//cameraPos = Mult(cameraPos,T(0,0,0.5));
 			camTrans = Mult(T(0,0,0.3),camTrans);
 		}
-		if(glutKeyIsDown('k')){
+		if(glutKeyIsDown('s')){
 			//cameraPos = Mult(cameraPos,T(0,0,-0.5));
 			camTrans = Mult(T(0,0,-0.3),camTrans);
 		}
-		if(glutKeyIsDown('j')){
+		if(glutKeyIsDown('a')){
 			//cameraPos = Mult(cameraPos,T(0.5,0,0));
 			camTrans = Mult(T(0.3,0,0),camTrans);
 		}
-		if(glutKeyIsDown('l')){
+		if(glutKeyIsDown('d')){
 			//cameraPos = Mult(cameraPos,T(-0.5,0,0));
 			camTrans = Mult(T(-0.3,0,0),camTrans);
 		}
@@ -230,10 +230,31 @@ void display(void)
 		moveCamera();
 
 	}
-
+	int prevX = 0;
+	int prevY = 0;
 	void mouse(int x, int y)
 	{
 		printf("%d %d\n", x, y);
+		if(!glutKeyIsDown('b')){
+			if((x != prevX) || (y != prevY)){
+				if((prevX - x) < 0){
+					angleY += 0.01;
+				}
+				else if ((prevX - x) > 0){
+					angleY -= 0.01;
+				}
+				if((prevY - y) < 0){
+					angleX += 0.01;
+				}
+				else if((prevY - y) > 0){
+					angleX -= 0.01;
+				}
+				prevX = x;
+				prevY = y;
+
+				glutWarpPointer(300, 300);
+			}
+		}
 	}
 
 	int main(int argc, char **argv)
