@@ -34,8 +34,6 @@
 // 170405: Made some globals static.
 // 170406: Added "const" to string arguments to make C++ happier. glutSpecialFunc and glutSpecialUpFunc are now officially supported - despite being deprecated. (I recommend that you use the same keyboard func for everything.) Added support for multiple mouse buttons (right and left).
 // 170410: Modified glutWarpPointer to make it more robust. Commended out some unused variables to avoid warnings.
-// 180124: Modifications to make it work better on recent MESA, which seems to have introduced some changes. Adds glFlush() in glutSwapBuffers and a timer when starting glutMain to invoke an update after 100 ms.
-// 180208: Added GLUT_WINDOW_WIDTH, GLUT_WINDOW_HEIGHT, GLUT_MOUSE_POSITION_X and GLUT_MOUSE_POSITION_Y to GlutGet. They were already in the Mac version, so let's converge the versions a bit.
 
 #define _BSD_SOURCE
 #include <math.h>
@@ -453,20 +451,12 @@ void doKeyboardEvent(XEvent event, void (*keyProc)(unsigned char key, int x, int
 //		      		{	if (gKeyUp) gKeyUp(buffer[0], 0, 0); gKeymap[(int)buffer[0]] = 0;}
 }
 
-void internaltimer(int x)
-{
-	glutPostRedisplay();
-}
-
 void glutMainLoop()
 {
 	char pressed = 0;
 	int i;
 
 	XAllowEvents(dpy, AsyncBoth, CurrentTime);
-
-// 2018-01-24: An attempt to patch over the problem that recent MESA tends to fail the first update.
-	glutTimerFunc(100, internaltimer, 0);
 
 	while (gRunning)
 	{
@@ -493,8 +483,6 @@ void glutMainLoop()
 					glViewport(0, 0, event.xconfigure.width, event.xconfigure.height);
 				}
 				animate = 1;
-				winWidth = event.xconfigure.width;
-				winHeight = event.xconfigure.height;
       			break;
       		case KeyPress:
 				doKeyboardEvent(event, gKey, gSpecialKey, 1);break;
@@ -570,7 +558,6 @@ void glutMainLoop()
 
 void glutSwapBuffers()
 {
-	glFlush(); // Added 2018-01-24, part of a fix for new MESA
 	glXSwapBuffers(dpy, win);
 }
 
@@ -583,21 +570,8 @@ int glutGet(int type)
 {
 	struct timeval tv;
 	
-	switch (type)
-	{
-		case GLUT_ELAPSED_TIME:
-		gettimeofday(&tv, NULL);
-		return (tv.tv_usec - timeStart.tv_usec) / 1000 + (tv.tv_sec - timeStart.tv_sec)*1000;
-		case GLUT_WINDOW_WIDTH:
-		return winWidth;
-		case GLUT_WINDOW_HEIGHT:
-		return winHeight;
-		case GLUT_MOUSE_POSITION_X:
-		return gLastMousePositionX;
-		case GLUT_MOUSE_POSITION_Y:
-		return gLastMousePositionY;
-	}
-	return 0;
+	gettimeofday(&tv, NULL);
+	return (tv.tv_usec - timeStart.tv_usec) / 1000 + (tv.tv_sec - timeStart.tv_sec)*1000;
 }
 
 // NOTE: The timer is not designed with any multithreading in mind!

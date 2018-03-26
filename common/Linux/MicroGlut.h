@@ -32,12 +32,17 @@ void glutMotionFunc(void (*func)(int x, int y));
 
 void glutInitWindowPosition (int x, int y);
 void glutInitWindowSize (int width, int height);
-void glutCreateWindow (char *windowTitle);
+void glutCreateWindow (const char *windowTitle);
 
 void glutSwapBuffers();
 
 #define GLUT_ELAPSED_TIME		(700)
-// To do: last known mouse position, quit flag, window width
+#define GLUT_WINDOW_WIDTH		(102)
+#define GLUT_WINDOW_HEIGHT		(103)
+#define GLUT_MOUSE_POSITION_X		(802)
+#define GLUT_MOUSE_POSITION_Y		(803)
+// #define GLUT_QUIT_FLAG			(801)
+// To do: quit flag
 int glutGet(int type);
 
 void glutInitDisplayMode(unsigned int mode);
