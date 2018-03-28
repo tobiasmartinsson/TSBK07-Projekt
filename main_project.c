@@ -79,6 +79,7 @@ unsigned int groundTexCoordBufferObjID;
 unsigned int groundNormalBufferObjID;
 vec3 cam = {0, 0, 0};
 vec3 lookAtPoint = {0, 0, -1};
+vec3 lookAtVector = {0,0,-1};
 vec3 up = {0,1,0};
 
 void init(void)
@@ -152,47 +153,30 @@ void display(void)
 
 	glUseProgram(program);
 
-	//glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
-	//glActiveTexture(GL_TEXTURE0);
 
+	lookAtVector = MultVec3(ArbRotate(CrossProduct(lookAtVector, up),angleX), lookAtVector);
+	lookAtVector = MultVec3(ArbRotate(up, angleY), lookAtVector);
 
+	up = MultVec3(ArbRotate(CrossProduct(lookAtVector, up),angleX), up);
+	up = MultVec3(ArbRotate(up, angleY), up);
 
-	//mat3 rotateXMat= mat4tomat3(Rx(angleX));= {1,0,0,
-											//0,cos(angleX),-sin(angleX),
-											//0,sin(angleX),cos(angleX)};
-
-
-	//cam = MultMat3Vec3(rotateXMat,cam);
-
-	/*mat3 rotateYMat  = {cos(angleY),0,sin(angleY),
-											0,1,0,
-											-sin(angleX),0,cos(angleX)};*/
-	//mat3 rotateYMat= mat4tomat3(Ry(angleY));
-
-	//cam = MultMat3Vec3(rotateYMat,cam);
-	lookAtPoint  = VectorSub(lookAtPoint,cam);
-	lookAtPoint = MultVec3(Rx(angleX),lookAtPoint);
-	lookAtPoint = MultVec3(Ry(angleY),lookAtPoint);
-	lookAtPoint  = VectorAdd(lookAtPoint,cam);
-
-	//maybe?
-	vec3 y = {0,1,0};
-	up  = VectorSub(up,y);
-	up = MultVec3(Rx(angleX),up);
-	up  = VectorAdd(up,y);
+	printf("Up vec\n" );
+	printf("%.2f",up.x );
+	printf(",%.2f",up.y );
+	printf(",%.2f\n",up.z );
 
 	angleX = 0;
 	angleY = 0;
-	/*
+
 	printf("Cam pos\n" );
 	printf("%.2f",cam.x);
 	printf(",%.2f",cam.y);
 	printf(",%.2f\n",cam.z);
 	printf("Look at pos\n" );
-	printf("%.2f",lookAtPoint.x);
-	printf(",%.2f",lookAtPoint.y);
-	printf(",%.2f\n",lookAtPoint.z);
-*/
+	printf("%.2f",lookAtVector.x);
+	printf(",%.2f",lookAtVector.y);
+	printf(",%.2f\n",lookAtVector.z);
+
 
 /*
 	if(cam.y<0){
@@ -201,7 +185,7 @@ void display(void)
 		printf("%s\n", "False");
 	}
 	*/
-
+	lookAtPoint = VectorAdd(cam, lookAtVector);
 
 	camMatrix = lookAt(cam.x, cam.y, cam.z,
 		lookAtPoint.x, lookAtPoint.y, lookAtPoint.z,
@@ -230,34 +214,27 @@ void display(void)
 
 	void moveCamera(){
 		if(glutKeyIsDown('w')){
-			//cameraPos = Mult(cameraPos,T(0,0,0.5));
-			//camTrans = Mult(T(0,0,0.3),camTrans);
-			cam = VectorAdd(ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3),cam);
-			lookAtPoint = VectorAdd(ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3),lookAtPoint);
+			cam = VectorAdd(cam,ScalarMult(lookAtVector,0.3));
+			//lookAtPoint = VectorAdd(ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3),lookAtPoint);
 		}
 		if(glutKeyIsDown('s')){
-			//cameraPos = Mult(cameraPos,T(0,0,-0.5));
-			//camTrans = Mult(T(0,0,-0.3),camTrans);
-			cam = VectorSub(cam,ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3));
-			lookAtPoint = VectorSub(lookAtPoint,ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3));
+			cam = VectorSub(cam,ScalarMult(lookAtVector,0.3));
+			//lookAtPoint = VectorSub(lookAtPoint,ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3));
 		}
 		if(glutKeyIsDown('a')){
-			//cameraPos = Mult(cameraPos,T(0.5,0,0));
-			//camTrans = Mult(T(0.3,0,0),camTrans);
-			vec3 left = Normalize(CrossProduct(VectorSub(cam,lookAtPoint),up));
-			cam = VectorAdd(ScalarMult(left,0.3),cam);
-			lookAtPoint = VectorAdd(ScalarMult(left,0.3),lookAtPoint);
+			//vec3 left = Normalize(CrossProduct(VectorSub(cam,lookAtPoint),up));
+			vec3 left = Normalize(CrossProduct(up, lookAtVector));
+			cam = VectorAdd(cam, ScalarMult(left,0.3));
+			//lookAtPoint = VectorAdd(ScalarMult(left,0.3),lookAtPoint);
 
 		}
 		if(glutKeyIsDown('d')){
-			//cameraPos = Mult(cameraPos,T(-0.5,0,0));
-			//camTrans = Mult(T(-0.3,0,0),camTrans);
-			vec3 right = Normalize(CrossProduct(up,VectorSub(cam,lookAtPoint)));
-			cam = VectorAdd(ScalarMult(right,0.3),cam);
-			lookAtPoint = VectorAdd(ScalarMult(right,0.3),lookAtPoint);
+			//vec3 right = Normalize(CrossProduct(up,VectorSub(cam,lookAtPoint)));
+			vec3 right = Normalize(CrossProduct(lookAtVector,up));
+			cam = VectorAdd(cam, ScalarMult(right,0.3));
+			//lookAtPoint = VectorAdd(ScalarMult(right,0.3),lookAtPoint);
 		}
 		if(glutKeyIsDown('r')){
-			//cameraPos = Mult(cameraPos,T(-0.5,0,0));
 			camTrans = T(0,0,0);
 			angleY = 0.0f;
 			angleX = 0.0f;
@@ -293,6 +270,7 @@ void display(void)
 				}
 				prevX = x;
 				prevY = y;
+
 
 				glutWarpPointer(300, 300);
 			}
