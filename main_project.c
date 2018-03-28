@@ -77,10 +77,12 @@ unsigned int vertexArrayObjID;
 unsigned int vertexBufferObjID;
 unsigned int groundTexCoordBufferObjID;
 unsigned int groundNormalBufferObjID;
-vec3 cam = {0, 0, 0};
+vec3 cam = {0, 0.25, 0};
 vec3 lookAtPoint = {0, 0, -1};
 vec3 lookAtVector = {0,0,-1};
 vec3 up = {0,1,0};
+
+GLfloat totalXRot = 0;
 
 void init(void)
 {
@@ -154,144 +156,177 @@ void display(void)
 	glUseProgram(program);
 
 
-	lookAtVector = MultVec3(ArbRotate(CrossProduct(lookAtVector, up),angleX), lookAtVector);
-	lookAtVector = MultVec3(ArbRotate(up, angleY), lookAtVector);
+	vec3 tmpLook = lookAtVector;
+	lookAtVector = MultVec3(ArbRotate(CrossProduct(tmpLook, up),angleX), lookAtVector);
+	//For free camera
+	//lookAtVector = MultVec3(ArbRotate(up, angleY), lookAtVector);
+	//For fps camera
+	lookAtVector = MultVec3(Ry(angleY), lookAtVector);
 
-	up = MultVec3(ArbRotate(CrossProduct(lookAtVector, up),angleX), up);
-	up = MultVec3(ArbRotate(up, angleY), up);
 
-	printf("Up vec\n" );
+
+	vec3 tmpUp = up;
+	up = MultVec3(ArbRotate(CrossProduct(tmpLook, tmpUp),angleX), up);
+	//For free camera
+	//up = MultVec3(ArbRotate(tmpUp, angleY), up);
+	//For fps camera
+	up = MultVec3(Ry(angleY), up);
+
+	/*printf("Up vec\n" );
 	printf("%.2f",up.x );
 	printf(",%.2f",up.y );
-	printf(",%.2f\n",up.z );
+	printf(",%.2f\n",up.z );*/
 
 	angleX = 0;
 	angleY = 0;
 
-	printf("Cam pos\n" );
+	/*printf("Cam pos\n" );
 	printf("%.2f",cam.x);
 	printf(",%.2f",cam.y);
 	printf(",%.2f\n",cam.z);
 	printf("Look at pos\n" );
 	printf("%.2f",lookAtVector.x);
 	printf(",%.2f",lookAtVector.y);
-	printf(",%.2f\n",lookAtVector.z);
+	printf(",%.2f\n",lookAtVector.z);*/
 
-
-/*
+	printf("%.2f\n",totalXRot );
+	/*
 	if(cam.y<0){
-		printf("%s\n","True");
-	}else{
-		printf("%s\n", "False");
+	printf("%s\n","True");
+}else{
+printf("%s\n", "False");
+}
+*/
+lookAtPoint = VectorAdd(cam, lookAtVector);
+cam.y = 0.25;
+
+
+camMatrix = lookAt(cam.x, cam.y, cam.z,
+	lookAtPoint.x, lookAtPoint.y, lookAtPoint.z,
+	up.x, up.y, up.z);
+	//camMatrix = Mult(Ry(angleY),camMatrix);
+	//camMatrix = Mult(Rx(angleX),camMatrix);
+	//camMatrix = Mult(camTrans,camMatrix);
+	modelView = IdentityMatrix();
+	total = Mult(camMatrix, modelView);
+	glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total.m);
+	//glUniformMatrix4fv(glGetUniformLocation(program, "camMatrix"), 1, GL_TRUE, camMatrix.m);
+
+
+	groundTransform = IdentityMatrix();
+
+	//groundTransform = Mult(Rx(M_PI/2), groundTransform);
+	groundTransform = Mult(T(0,0,0),groundTransform);
+	groundTransform = Mult(camMatrix, groundTransform);
+	glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, groundTransform.m);
+	glBindVertexArray(vertexArrayObjID);	// Select VAO
+	glDrawArrays(GL_TRIANGLES, 0, 2*3);	// draw object
+
+
+	glutSwapBuffers();
+}
+
+void moveCamera(){
+	if(glutKeyIsDown('w')){
+		vec3 moveVec = lookAtVector;
+		moveVec.y  = 0.25;
+		cam = VectorAdd(cam,ScalarMult(moveVec,0.3));
+		//lookAtPoint = VectorAdd(ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3),lookAtPoint);
 	}
-	*/
-	lookAtPoint = VectorAdd(cam, lookAtVector);
-
-	camMatrix = lookAt(cam.x, cam.y, cam.z,
-		lookAtPoint.x, lookAtPoint.y, lookAtPoint.z,
-		up.x, up.y, up.z);
-		//camMatrix = Mult(Ry(angleY),camMatrix);
-		//camMatrix = Mult(Rx(angleX),camMatrix);
-		//camMatrix = Mult(camTrans,camMatrix);
-		modelView = IdentityMatrix();
-		total = Mult(camMatrix, modelView);
-		glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total.m);
-		//glUniformMatrix4fv(glGetUniformLocation(program, "camMatrix"), 1, GL_TRUE, camMatrix.m);
-
-
-		groundTransform = IdentityMatrix();
-
-		//groundTransform = Mult(Rx(M_PI/2), groundTransform);
-		groundTransform = Mult(T(0,0,0),groundTransform);
-		groundTransform = Mult(camMatrix, groundTransform);
-		glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, groundTransform.m);
-		glBindVertexArray(vertexArrayObjID);	// Select VAO
-		glDrawArrays(GL_TRIANGLES, 0, 2*3);	// draw object
-
-
-		glutSwapBuffers();
+	if(glutKeyIsDown('s')){
+		vec3 moveVec = lookAtVector;
+		moveVec.y  = 0.25;
+		cam = VectorSub(cam,ScalarMult(moveVec,0.3));
+		//lookAtPoint = VectorSub(lookAtPoint,ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3));
 	}
-
-	void moveCamera(){
-		if(glutKeyIsDown('w')){
-			cam = VectorAdd(cam,ScalarMult(lookAtVector,0.3));
-			//lookAtPoint = VectorAdd(ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3),lookAtPoint);
-		}
-		if(glutKeyIsDown('s')){
-			cam = VectorSub(cam,ScalarMult(lookAtVector,0.3));
-			//lookAtPoint = VectorSub(lookAtPoint,ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3));
-		}
-		if(glutKeyIsDown('a')){
-			//vec3 left = Normalize(CrossProduct(VectorSub(cam,lookAtPoint),up));
-			vec3 left = Normalize(CrossProduct(up, lookAtVector));
-			cam = VectorAdd(cam, ScalarMult(left,0.3));
-			//lookAtPoint = VectorAdd(ScalarMult(left,0.3),lookAtPoint);
-
-		}
-		if(glutKeyIsDown('d')){
-			//vec3 right = Normalize(CrossProduct(up,VectorSub(cam,lookAtPoint)));
-			vec3 right = Normalize(CrossProduct(lookAtVector,up));
-			cam = VectorAdd(cam, ScalarMult(right,0.3));
-			//lookAtPoint = VectorAdd(ScalarMult(right,0.3),lookAtPoint);
-		}
-		if(glutKeyIsDown('r')){
-			camTrans = T(0,0,0);
-			angleY = 0.0f;
-			angleX = 0.0f;
-		}
-	}
-
-	void timer(int i)
-	{
-		glutTimerFunc(20, &timer, i);
-		glutPostRedisplay();
-		moveCamera();
+	if(glutKeyIsDown('a')){
+		//vec3 left = Normalize(CrossProduct(VectorSub(cam,lookAtPoint),up));
+		vec3 left = Normalize(CrossProduct(up, lookAtVector));
+		left.y = 0.25;
+		cam = VectorAdd(cam, ScalarMult(left,0.3));
+		//lookAtPoint = VectorAdd(ScalarMult(left,0.3),lookAtPoint);
 
 	}
-	int prevX = 0;
-	int prevY = 0;
-	void mouse(int x, int y)
-	{
-		//printf("%d %d\n", x, y);
-		if(!glutKeyIsDown('b')){
-			glutHideCursor();
-			if((x != prevX) || (y != prevY)){
-				if((prevX - x) < 0){
-					angleY -= 0.03;
-				}
-				else if ((prevX - x) > 0){
-					angleY += 0.03;
-				}
+	if(glutKeyIsDown('d')){
+		//vec3 right = Normalize(CrossProduct(up,VectorSub(cam,lookAtPoint)));
+		vec3 right = Normalize(CrossProduct(lookAtVector,up));
+		right.y = 0.25;
+		cam = VectorAdd(cam, ScalarMult(right,0.3));
+		//lookAtPoint = VectorAdd(ScalarMult(right,0.3),lookAtPoint);
+	}
+	if(glutKeyIsDown('r')){
+		camTrans = T(0,0,0);
+		angleY = 0.0f;
+		angleX = 0.0f;
+	}
+}
+
+void timer(int i)
+{
+	glutTimerFunc(20, &timer, i);
+	glutPostRedisplay();
+	moveCamera();
+
+}
+int prevX = 0;
+int prevY = 0;
+void mouse(int x, int y)
+{
+	//printf("%d %d\n", x, y);
+	if(!glutKeyIsDown('b')){
+		glutHideCursor();
+		if((x != prevX) || (y != prevY)){
+			if((prevX - x) < 0){
+				angleY -= 0.03;
+			}
+			else if ((prevX - x) > 0){
+				angleY += 0.03;
+			}
+
+			if((totalXRot < M_PI/2) && (totalXRot > -M_PI/2)){
 				if((prevY - y) < 0){
 					angleX -= 0.03;
+					totalXRot -= 0.03;
 				}
 				else if((prevY - y) > 0){
 					angleX += 0.03;
+					totalXRot += 0.03;
 				}
-				prevX = x;
-				prevY = y;
-
-
-				glutWarpPointer(300, 300);
+			}else if(totalXRot >= M_PI/2){
+				if((prevY - y) < 0){
+					angleX -= 0.03;
+					totalXRot -= 0.03;
+				}
+			}else if(totalXRot <= -M_PI/2){
+				if((prevY - y) > 0){
+					angleX += 0.03;
+					totalXRot += 0.03;
+				}
 			}
-		}else{
-			glutShowCursor();
+			prevX = x;
+			prevY = y;
+
+
+			glutWarpPointer(300, 300);
 		}
+	}else{
+		glutShowCursor();
 	}
+}
 
-	int main(int argc, char **argv)
-	{
-		glutInit(&argc, argv);
-		glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
-		glutInitContextVersion(3, 2);
-		glutInitWindowSize (600, 600);
-		glutCreateWindow ("TSBK07 Project");
-		glutDisplayFunc(display);
-		init ();
-		glutTimerFunc(20, &timer, 0);
+int main(int argc, char **argv)
+{
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+	glutInitContextVersion(3, 2);
+	glutInitWindowSize (600, 600);
+	glutCreateWindow ("TSBK07 Project");
+	glutDisplayFunc(display);
+	init ();
+	glutTimerFunc(20, &timer, 0);
 
-		glutPassiveMotionFunc(mouse);
+	glutPassiveMotionFunc(mouse);
 
-		glutMainLoop();
-		exit(0);
-	}
+	glutMainLoop();
+	exit(0);
+}
