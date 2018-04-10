@@ -17,6 +17,8 @@ unsigned int vertexBufferObjID;
 unsigned int groundTexCoordBufferObjID;
 unsigned int groundNormalBufferObjID;
 
+
+
 GLfloat groundMatrix[] = {
 	-0.5, 0, 0.5,
 	-0.5, 0, -0.5,
@@ -46,6 +48,9 @@ GLfloat groundNormal[] = {
 	0, 1, 0
 };
 
+
+int maxX = 0;
+int maxZ = 0;
 GLuint shaderProgram;
 GLuint groundTex;
 mat4 groundTransform, wallTransformT, wallTransformB, wallTransformL, wallTransformR;
@@ -98,6 +103,9 @@ void initMap(GLuint program){
 
 	wallTransformR = Mult(T(1,0,0),wallTransformL);
 
+
+	numOfWalls = 0;
+
 }
 
 void drawSquare(mat4 camMat, mat4 squareTransform){
@@ -107,17 +115,7 @@ void drawSquare(mat4 camMat, mat4 squareTransform){
 	glDrawArrays(GL_TRIANGLES, 0, 2*3);	// draw object
 }
 
-void drawWall(mat4 camMatrix, mat4 wallTrans, int x, int z){
-  wallTrans.m[3] += x;
-  wallTrans.m[11] += z;
-  drawSquare(camMatrix, wallTrans);
-}
-
-void drawMap(mat4 camMatrix){
-	int maxX = 0;
-	int maxZ = 0;
-  readMapFile(camMatrix, &maxX, &maxZ);
-
+void drawFloor(mat4 camMatrix){
 	//Draws the ground
 	int i, j;
   for(i = 0; i < maxX; i++){
@@ -129,45 +127,61 @@ void drawMap(mat4 camMatrix){
   }
 }
 
+void reDrawWall(mat4 camMat){
+	int i;
+	for(i = 0; i < numOfWalls; i++ ){
+		drawSquare(camMat, wallList[i].wallTrans);
+	}
+	drawFloor(camMat);
+}
+
+void drawWall(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
+  wallTrans.m[3] += x;
+  wallTrans.m[11] += z;
+	wallList[numOfWalls].wallTrans = wallTrans;
+	wallList[numOfWalls].wallType = wallC;
+	numOfWalls++;
+  drawSquare(camMatrix, wallTrans);
+}
+
 void evalutateChar(char c, mat4 camMatrix, int charNum, int lineNum){
 	switch (c) {
 		case 'T':
-			drawWall(camMatrix, wallTransformT, charNum, lineNum);
+			drawWall(camMatrix, wallTransformT, charNum, lineNum, 'X');
 			break;
 		case 'B':
-			drawWall(camMatrix, wallTransformB, charNum, lineNum);
+			drawWall(camMatrix, wallTransformB, charNum, lineNum, 'X');
 			break;
 		case 'L':
-			drawWall(camMatrix, wallTransformL, charNum, lineNum);
+			drawWall(camMatrix, wallTransformL, charNum, lineNum, 'Z');
 			break;
 		case 'R':
-			drawWall(camMatrix, wallTransformR, charNum, lineNum);
+			drawWall(camMatrix, wallTransformR, charNum, lineNum, 'Z');
 			break;
 		case '1':
-			drawWall(camMatrix, wallTransformT, charNum, lineNum);
-			drawWall(camMatrix, wallTransformL, charNum, lineNum);
+			drawWall(camMatrix, wallTransformT, charNum, lineNum, 'X');
+			drawWall(camMatrix, wallTransformL, charNum, lineNum, 'Z');
 			break;
 		case '2':
-			drawWall(camMatrix, wallTransformT, charNum, lineNum);
-			drawWall(camMatrix, wallTransformR, charNum, lineNum);
+			drawWall(camMatrix, wallTransformT, charNum, lineNum, 'X');
+			drawWall(camMatrix, wallTransformR, charNum, lineNum, 'Z');
 			break;
 		case '3':
-			drawWall(camMatrix, wallTransformB, charNum, lineNum);
-			drawWall(camMatrix, wallTransformL, charNum, lineNum);
+			drawWall(camMatrix, wallTransformB, charNum, lineNum, 'X');
+			drawWall(camMatrix, wallTransformL, charNum, lineNum, 'Z');
 			break;
 		case '4':
-			drawWall(camMatrix, wallTransformB, charNum, lineNum);
-			drawWall(camMatrix, wallTransformR, charNum, lineNum);
+			drawWall(camMatrix, wallTransformB, charNum, lineNum, 'X');
+			drawWall(camMatrix, wallTransformR, charNum, lineNum, 'Z');
 			break;
 		default:
 			break;
-
 	}
 }
 
-void readMapFile(mat4 camMatrix, int *maxChar, int *maxLine){
+void readMapFile(char* mapName, mat4 camMatrix){
   FILE *mapFile;
-  mapFile = fopen("map3.txt","r");
+  mapFile = fopen(mapName,"r");
   char * curLine = NULL;
   size_t size = 100;
   int lineNum = 0;
@@ -177,17 +191,18 @@ void readMapFile(mat4 camMatrix, int *maxChar, int *maxLine){
     char c = *curLine;
 
     while(c){
-      printf("%c \n",c);
+      //printf("%c \n",c);
 			evalutateChar(c, camMatrix, charNum, lineNum);
 			charNum++;
       c = *(curLine+charNum);
     }
 
-		if(charNum > *maxChar)
-			*maxChar = charNum;
+		if(charNum > maxX){
+			maxX = charNum;
+		}
 
       lineNum++;
   }
-	*maxLine = lineNum;
+	maxZ = lineNum;
   fclose(mapFile);
 }

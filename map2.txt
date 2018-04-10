@@ -1,4 +1,10 @@
-11T2
-L3LLL
-3B4LL
-3BB4
+TTTTTTTTTTTTTTT
+L             R
+L             R
+L       4     R
+L             R
+L             R
+L             R
+L             R
+L             R
+BBBBBBBBBBBBBBB

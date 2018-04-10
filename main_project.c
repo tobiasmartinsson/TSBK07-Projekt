@@ -11,11 +11,10 @@
 #include "loadobj.h"
 #include "LoadTGA.h"
 #include "map.h"
+#include <math.h>
 
 mat4 projectionMatrix;
 
-// vertex array object
-Model *m;
 
 // Reference to shader program
 GLuint program;
@@ -23,23 +22,17 @@ GLuint program;
 GLfloat angleY;
 GLfloat angleX ;
 
-mat4 camTrans;
-
 bool freeCam = false;
 
-
-// vertex array object
-unsigned int vertexArrayObjID;
-unsigned int vertexBufferObjID;
-unsigned int groundTexCoordBufferObjID;
-unsigned int groundNormalBufferObjID;
 vec3 cam = {0, 0.25, 0};
 vec3 lookAtPoint = {0, 0, -1};
 vec3 lookAtVector = {0,0,-1};
 vec3 up = {0,1,0};
 
 GLfloat totalXRot = 0;
+mat4 total, modelView, camMatrix;
 
+float movementSpeed = 0.05;
 void init(void)
 {
 	// GL inits
@@ -52,7 +45,9 @@ void init(void)
 	projectionMatrix = frustum(-0.1, 0.1, -0.1, 0.1, 0.2, 50.0);
 	angleY= 0.0f;
 	angleX = 0.0f;
-	camTrans = T(0,0,0);
+	camMatrix = lookAt(cam.x, cam.y, cam.z,
+		lookAtPoint.x, lookAtPoint.y, lookAtPoint.z,
+		up.x, up.y, up.z);
 
 
 	// Load and compile shader
@@ -62,6 +57,7 @@ void init(void)
 
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	initMap(program);
+	readMapFile("map2.txt", camMatrix);
 }
 
 
@@ -69,11 +65,7 @@ void display(void)
 {
 	// clear the screen
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-	mat4 total, modelView, camMatrix;
 	printError("pre display");
-
 	glUseProgram(program);
 
 	/** CAMERA **/
@@ -103,11 +95,6 @@ void display(void)
 		lookAtPoint.x, lookAtPoint.y, lookAtPoint.z,
 		up.x, up.y, up.z);
 
-
-	//camMatrix = Mult(Ry(angleY),camMatrix);
-	//camMatrix = Mult(Rx(angleX),camMatrix);
-	//camMatrix = Mult(camTrans,camMatrix);
-
 	/** CAMERA END **/
 
 
@@ -116,7 +103,7 @@ void display(void)
 	glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total.m);
 	//glUniformMatrix4fv(glGetUniformLocation(program, "camMatrix"), 1, GL_TRUE, camMatrix.m);
 
-	drawMap(camMatrix);
+	reDrawWall(camMatrix);
 	glutSwapBuffers();
 }
 
@@ -135,48 +122,61 @@ void resetCamera(){
 	totalXRot = 0.0f;
 }
 
+bool wallCollision(vec3 movementVector){
+	int j;
+	for(j = 0; j < numOfWalls; j++){
+		float wallX = wallList[j].wallTrans.m[3];
+		float wallZ = wallList[j].wallTrans.m[11];
+		float dist = 1000;
+
+		if(wallList[j].wallType == 'X'){
+			if(sqrt(pow(wallX-movementVector.x,2)) < 0.5)
+				dist = sqrt(pow(wallZ-movementVector.z,2));
+		}else if(wallList[j].wallType == 'Z'){
+			if(sqrt(pow(wallZ-movementVector.z,2)) < 0.5)
+			dist = sqrt(pow(wallX-movementVector.x,2));
+		}
+		printf("%.2f\n",dist );
+		if(dist < 0.25f){
+			printf("true");
+			return true;
+		}
+	}
+	return false;
+}
+
 void moveCamera(){
 	if(glutKeyIsDown('w')){
 		vec3 moveVec = lookAtVector;
-		//if(!freeCam)
-			//moveVec.y  = 0.25;
-		cam = VectorAdd(cam,ScalarMult(moveVec,0.3));
+		if(!wallCollision(VectorAdd(cam,ScalarMult(moveVec,movementSpeed))))
+			cam = VectorAdd(cam,ScalarMult(moveVec,movementSpeed));
+
 		if(!freeCam)
 			cam.y = 0.25;
-		//lookAtPoint = VectorAdd(ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3),lookAtPoint);
 	}
 	if(glutKeyIsDown('s')){
 		vec3 moveVec = lookAtVector;
-		//moveVec.y  = 0.25;
-		cam = VectorSub(cam,ScalarMult(moveVec,0.3));
+		if(!wallCollision(VectorSub(cam,ScalarMult(moveVec,movementSpeed))))
+			cam = VectorSub(cam,ScalarMult(moveVec,movementSpeed));
 		if(!freeCam)
 			cam.y = 0.25;
-		//lookAtPoint = VectorSub(lookAtPoint,ScalarMult(Normalize(VectorSub(lookAtPoint, cam)),0.3));
 	}
 	if(glutKeyIsDown('a')){
-		//vec3 left = Normalize(CrossProduct(VectorSub(cam,lookAtPoint),up));
-		vec3 left = Normalize(CrossProduct(up, lookAtVector));
-		//left.y = 0.25;
-		cam = VectorAdd(cam, ScalarMult(left,0.3));
-		//lookAtPoint = VectorAdd(ScalarMult(left,0.3),lookAtPoint);
 
+		vec3 left = Normalize(CrossProduct(up, lookAtVector));
+		if(!wallCollision(VectorAdd(cam, ScalarMult(left,movementSpeed))))
+			cam = VectorAdd(cam, ScalarMult(left,movementSpeed));
 	}
 	if(glutKeyIsDown('d')){
-		//vec3 right = Normalize(CrossProduct(up,VectorSub(cam,lookAtPoint)));
 		vec3 right = Normalize(CrossProduct(lookAtVector,up));
-		//right.y = 0.25;
-		cam = VectorAdd(cam, ScalarMult(right,0.3));
-		//lookAtPoint = VectorAdd(ScalarMult(right,0.3),lookAtPoint);
+		if(!wallCollision(VectorAdd(cam, ScalarMult(right,movementSpeed))))
+			cam = VectorAdd(cam, ScalarMult(right,movementSpeed));
 	}
 	if(glutKeyIsDown('r')){
 		resetCamera();
 	}
 
 	if(glutKeyIsDown('t')){
-		/*if(freeCam)
-			freeCam = false;
-		else
-			freeCam = true;*/
 			freeCam = !freeCam;
 	}
 }
@@ -186,7 +186,6 @@ void timer(int i)
 	glutTimerFunc(20, &timer, i);
 	glutPostRedisplay();
 	moveCamera();
-
 }
 
 	int prevX = 0;
