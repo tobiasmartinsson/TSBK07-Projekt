@@ -4,6 +4,8 @@
 struct WallPiece{
   mat4 wallTrans;
   char wallType;
+  float textureSpeed;
+  float textureSpeed2;
 };
 
 void initMap(GLuint program);

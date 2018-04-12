@@ -57,7 +57,7 @@ void init(void)
 
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	initMap(program);
-	readMapFile("map2.txt", camMatrix);
+	readMapFile("map.txt", camMatrix);
 }
 
 
@@ -124,22 +124,24 @@ void resetCamera(){
 
 bool wallCollision(vec3 movementVector){
 	int j;
-	for(j = 0; j < numOfWalls; j++){
-		float wallX = wallList[j].wallTrans.m[3];
-		float wallZ = wallList[j].wallTrans.m[11];
-		float dist = 1000;
+	if(movementVector.y <= 1.0f){
+		for(j = 0; j < numOfWalls; j++){
+			float wallX = wallList[j].wallTrans.m[3];
+			float wallZ = wallList[j].wallTrans.m[11];
+			float dist = 1000;
 
-		if(wallList[j].wallType == 'X'){
-			if(sqrt(pow(wallX-movementVector.x,2)) < 0.5)
-				dist = sqrt(pow(wallZ-movementVector.z,2));
-		}else if(wallList[j].wallType == 'Z'){
-			if(sqrt(pow(wallZ-movementVector.z,2)) < 0.5)
-			dist = sqrt(pow(wallX-movementVector.x,2));
-		}
-		printf("%.2f\n",dist );
-		if(dist < 0.25f){
-			printf("true");
-			return true;
+			if(wallList[j].wallType == 'X'){
+				if(sqrt(pow(wallX-movementVector.x,2)) < 0.5)
+					dist = sqrt(pow(wallZ-movementVector.z,2));
+			}else if(wallList[j].wallType == 'Z'){
+				if(sqrt(pow(wallZ-movementVector.z,2)) < 0.5)
+				dist = sqrt(pow(wallX-movementVector.x,2));
+			}
+			//printf("%.2f\n",dist );
+			if(dist < 0.25f){
+				//printf("true");
+				return true;
+			}
 		}
 	}
 	return false;

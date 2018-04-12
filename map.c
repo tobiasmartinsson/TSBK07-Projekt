@@ -30,12 +30,12 @@ GLfloat groundMatrix[] = {
 };
 
 GLfloat groundTextureCoord[]={
-	0.0f,10.0f,
+	0.0f,1.0f,
 	0.0f,0.0f,
-	10.0f,0.0f,
-	10.0f,0.0f,
-	0.0f,10.0f,
-	10.0f,10.0f
+	1.0f,0.0f,
+	1.0f,0.0f,
+	0.0f,1.0f,
+	1.0f,1.0f
 };
 
 GLfloat groundNormal[] = {
@@ -57,7 +57,7 @@ mat4 groundTransform, wallTransformT, wallTransformB, wallTransformL, wallTransf
 
 void initMap(GLuint program){
   shaderProgram = program;
-  LoadTGATextureSimple("grass.tga", &groundTex);
+  LoadTGATextureSimple("rutor.tga", &groundTex);
 
   // Allocate and activate Vertex Array Object
 	glGenVertexArrays(1, &vertexArrayObjID);
@@ -129,10 +129,21 @@ void drawFloor(mat4 camMatrix){
 
 void reDrawWall(mat4 camMat){
 	int i;
+	GLfloat textureTimer = glutGet(GLUT_ELAPSED_TIME) / 10000.0;
+	glUniform1f(glGetUniformLocation(shaderProgram, "textureTimer"), textureTimer);
+
 	for(i = 0; i < numOfWalls; i++ ){
+		glUniform1f(glGetUniformLocation(shaderProgram, "randomValue"), wallList[i].textureSpeed);
+		glUniform1f(glGetUniformLocation(shaderProgram, "randomValue2"), wallList[i].textureSpeed2);
 		drawSquare(camMat, wallList[i].wallTrans);
 	}
+
 	drawFloor(camMat);
+}
+
+int randSign(){
+	if(rand() % 2 == 0) return -1;
+	else return 1;
 }
 
 void drawWall(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
@@ -140,9 +151,16 @@ void drawWall(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
   wallTrans.m[11] += z;
 	wallList[numOfWalls].wallTrans = wallTrans;
 	wallList[numOfWalls].wallType = wallC;
+	wallList[numOfWalls].textureSpeed = randSign() * ((rand() % 25) +1.0f)/10.0f;
+	wallList[numOfWalls].textureSpeed2 = randSign() * ((rand() % 25) +1.0f)/10.0f;
 	numOfWalls++;
+
+	glUniform1f(glGetUniformLocation(shaderProgram, "randomValue"), wallList[numOfWalls].textureSpeed);
+	glUniform1f(glGetUniformLocation(shaderProgram, "randomValue2"), wallList[numOfWalls].textureSpeed2);
   drawSquare(camMatrix, wallTrans);
 }
+
+
 
 void evalutateChar(char c, mat4 camMatrix, int charNum, int lineNum){
 	switch (c) {

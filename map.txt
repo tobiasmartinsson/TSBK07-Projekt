@@ -1,8 +1,1 @@
-XXXXXXXXXX
-Z   Z   X Z
-Z   X   Z Z
-Z   Z     Z
-Z   X     Z
-Z   Z     Z
-Z   X     Z
-XXXXXXXXXX
+TTTTTTT
