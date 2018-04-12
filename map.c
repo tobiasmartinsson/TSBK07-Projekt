@@ -30,12 +30,12 @@ GLfloat groundMatrix[] = {
 };
 
 GLfloat groundTextureCoord[]={
-	0.0f,1.0f,
+	0.0f,8.0f,
 	0.0f,0.0f,
-	1.0f,0.0f,
-	1.0f,0.0f,
-	0.0f,1.0f,
-	1.0f,1.0f
+	8.0f,0.0f,
+	8.0f,0.0f,
+	0.0f,8.0f,
+	8.0f,8.0f
 };
 
 GLfloat groundNormal[] = {
@@ -57,7 +57,7 @@ mat4 groundTransform, wallTransformT, wallTransformB, wallTransformL, wallTransf
 
 void initMap(GLuint program){
   shaderProgram = program;
-  LoadTGATextureSimple("rutor.tga", &groundTex);
+  LoadTGATextureSimple("number1.tga", &groundTex);
 
   // Allocate and activate Vertex Array Object
 	glGenVertexArrays(1, &vertexArrayObjID);
@@ -129,7 +129,7 @@ void drawFloor(mat4 camMatrix){
 
 void reDrawWall(mat4 camMat){
 	int i;
-	GLfloat textureTimer = glutGet(GLUT_ELAPSED_TIME) / 10000.0;
+	GLfloat textureTimer = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
 	glUniform1f(glGetUniformLocation(shaderProgram, "textureTimer"), textureTimer);
 
 	for(i = 0; i < numOfWalls; i++ ){

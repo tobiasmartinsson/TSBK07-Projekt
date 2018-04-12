@@ -13,14 +13,18 @@ void main(void)
 {
 	vec4 tex;
 	//change to *X for number of vertical lines
-	if(mod(tex_to_fragment.s*8,2) > 1){
-		if(mod(tex_to_fragment.s*4,2) > 1.5){
+	//tex = texture(texUnit, tex_to_fragment);
+	if(mod(tex_to_fragment.s ,2) > 1){
+		//tex = texture(texUnit, vec2(tex_to_fragment.s, tex_to_fragment.t+textureTimer*randomValue));
+
+		if(mod(tex_to_fragment.s/2,2) > 1.5){
 			tex = texture(texUnit, vec2(tex_to_fragment.s, tex_to_fragment.t+textureTimer*randomValue));
 		}else{
 			tex = texture(texUnit, vec2(tex_to_fragment.s, tex_to_fragment.t+textureTimer*randomValue*2.3f));
 		}
 	}else{
-		if(mod(tex_to_fragment.s*4,2) > 0.5){
+		//tex = texture(texUnit, vec2(tex_to_fragment.s, tex_to_fragment.t-textureTimer*randomValue2));
+		if(mod(tex_to_fragment.s/2,2) > 0.5){
 			tex = texture(texUnit, vec2(tex_to_fragment.s, tex_to_fragment.t-textureTimer*randomValue2));
 		}else{
 			tex = texture(texUnit, vec2(tex_to_fragment.s, tex_to_fragment.t-textureTimer*randomValue2 * 2.3f));
@@ -30,5 +34,5 @@ void main(void)
 	float shade = dot(normal_to_frag, light);
 	shade  = clamp(shade, 0,1);
 	vec3 shading =  vec3(shade);
-	outColor = tex*shade;
+	outColor = tex;
 }
