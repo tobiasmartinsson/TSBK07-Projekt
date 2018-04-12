@@ -57,7 +57,7 @@ void init(void)
 
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	initMap(program);
-	readMapFile("map.txt", camMatrix);
+	readMapFile("map3.txt", camMatrix);
 }
 
 

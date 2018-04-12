@@ -52,12 +52,13 @@ GLfloat groundNormal[] = {
 int maxX = 0;
 int maxZ = 0;
 GLuint shaderProgram;
-GLuint groundTex;
+GLuint oneTex, zeroTex;
 mat4 groundTransform, wallTransformT, wallTransformB, wallTransformL, wallTransformR;
 
 void initMap(GLuint program){
   shaderProgram = program;
-  LoadTGATextureSimple("number1.tga", &groundTex);
+  LoadTGATextureSimple("number1.tga", &oneTex);
+	LoadTGATextureSimple("number0.tga", &zeroTex);
 
   // Allocate and activate Vertex Array Object
 	glGenVertexArrays(1, &vertexArrayObjID);
@@ -67,8 +68,12 @@ void initMap(GLuint program){
 	glGenBuffers(1, &groundNormalBufferObjID);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, groundTex);
+	glBindTexture(GL_TEXTURE_2D, oneTex);
 	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit"), 0); // Texture unit 0
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, zeroTex);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit2"), 1); // Texture unit 0
+
 	glGenBuffers(1, &groundTexCoordBufferObjID);  //TEXTURE
 
 	// VBO for vertex data
@@ -96,16 +101,17 @@ void initMap(GLuint program){
 	wallTransformT = Mult(Rx(M_PI/2), groundTransform);
   wallTransformT = Mult(T(0,0.5,-0.5),wallTransformT);
 
-  wallTransformB = Mult(T(0,0,1),wallTransformT);
+	wallTransformB = Mult(Ry(M_PI),wallTransformT);
+  //wallTransformB = Mult(T(0,0,1),wallTransformB);
 
   wallTransformL = Mult(Rz(M_PI/2), groundTransform);
+	wallTransformL = Mult(Rx(M_PI/2), wallTransformL);
+	wallTransformL = Mult(Ry(M_PI),wallTransformL);
   wallTransformL = Mult(T(-0.5,0.5,0),wallTransformL);
 
-	wallTransformR = Mult(T(1,0,0),wallTransformL);
-
+	wallTransformR = Mult(Ry(M_PI),wallTransformL);
 
 	numOfWalls = 0;
-
 }
 
 void drawSquare(mat4 camMat, mat4 squareTransform){
@@ -135,6 +141,7 @@ void reDrawWall(mat4 camMat){
 	for(i = 0; i < numOfWalls; i++ ){
 		glUniform1f(glGetUniformLocation(shaderProgram, "randomValue"), wallList[i].textureSpeed);
 		glUniform1f(glGetUniformLocation(shaderProgram, "randomValue2"), wallList[i].textureSpeed2);
+		glUniform1fv(glGetUniformLocation(shaderProgram, "numberSequence"),64, wallList[i].numberSequence);
 		drawSquare(camMat, wallList[i].wallTrans);
 	}
 
@@ -146,6 +153,14 @@ int randSign(){
 	else return 1;
 }
 
+void generateRandomSequence (){
+	int i;
+	for(i = 0; i < 64; i++){
+				if(randSign() < 0) wallList[numOfWalls].numberSequence[i] = 0.0f;
+				else wallList[numOfWalls].numberSequence[i] = 1.0f;
+	}
+}
+
 void drawWall(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
   wallTrans.m[3] += x;
   wallTrans.m[11] += z;
@@ -153,10 +168,13 @@ void drawWall(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
 	wallList[numOfWalls].wallType = wallC;
 	wallList[numOfWalls].textureSpeed = randSign() * ((rand() % 25) +1.0f)/10.0f;
 	wallList[numOfWalls].textureSpeed2 = randSign() * ((rand() % 25) +1.0f)/10.0f;
+	wallList[numOfWalls].numberSequence[0] = 0.0f;
+	generateRandomSequence();
 	numOfWalls++;
 
 	glUniform1f(glGetUniformLocation(shaderProgram, "randomValue"), wallList[numOfWalls].textureSpeed);
 	glUniform1f(glGetUniformLocation(shaderProgram, "randomValue2"), wallList[numOfWalls].textureSpeed2);
+	glUniform1fv(glGetUniformLocation(shaderProgram, "numberSequence"),64, wallList[numOfWalls].numberSequence);
   drawSquare(camMatrix, wallTrans);
 }
 
