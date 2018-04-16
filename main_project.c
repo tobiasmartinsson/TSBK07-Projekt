@@ -16,17 +16,19 @@
 mat4 projectionMatrix;
 
 
+
 // Reference to shader program
 GLuint program;
 
 GLfloat angleY;
 GLfloat angleX ;
+GLfloat pastT;
 
 bool freeCam = false;
 
 vec3 cam = {0, 0.25, 0};
-vec3 lookAtPoint = {0, 0, -1};
-vec3 lookAtVector = {0,0,-1};
+vec3 lookAtPoint = {1, 0, 1};
+vec3 lookAtVector = {1,0,1};
 vec3 up = {0,1,0};
 
 GLfloat totalXRot = 0;
@@ -35,16 +37,20 @@ mat4 total, modelView, camMatrix;
 float movementSpeed = 0.05;
 void init(void)
 {
+
+
+
 	// GL inits
-	glClearColor(0.0,0.0,0.0,0);
+	glClearColor(1,0,0,0);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 	printError("GL inits");
 
-
+	pastT = 0;
 	projectionMatrix = frustum(-0.1, 0.1, -0.1, 0.1, 0.2, 50.0);
 	angleY= 0.0f;
 	angleX = 0.0f;
+
 	camMatrix = lookAt(cam.x, cam.y, cam.z,
 		lookAtPoint.x, lookAtPoint.y, lookAtPoint.z,
 		up.x, up.y, up.z);
@@ -57,7 +63,9 @@ void init(void)
 
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	initMap(program);
-	readMapFile("map3.txt", camMatrix);
+	readMapFile("map4.txt", camMatrix);
+	cam.x = startPos[0];
+	cam.z = startPos[1];
 }
 
 
@@ -103,7 +111,15 @@ void display(void)
 	glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total.m);
 	//glUniformMatrix4fv(glGetUniformLocation(program, "camMatrix"), 1, GL_TRUE, camMatrix.m);
 
-	reDrawWall(camMatrix);
+	/*UPDATES LIGHT EVERY SECOND; FLICKERING LIGHTS*/
+	GLfloat t = glutGet(GLUT_ELAPSED_TIME);
+	if((t/1000 - pastT) > 1){
+		updateLight();
+		pastT = t/1000;
+	}
+
+
+	reDrawMap(camMatrix);
 	glutSwapBuffers();
 }
 
@@ -113,9 +129,9 @@ void resetCamera(){
 	cam.x = 0;
 	cam.y = 0.25;
 	cam.z = 0;
-	lookAtVector.x = 0;
+	lookAtVector.x = 1;
 	lookAtVector.y = 0;
-	lookAtVector.z = -1;
+	lookAtVector.z = 1;
 	up.x = 0;
 	up.y = 1;
 	up.z = 0;
@@ -147,7 +163,21 @@ bool wallCollision(vec3 movementVector){
 	return false;
 }
 
+bool isAtEnd(){
+	if((cam.x > endPos[0]) && (cam.x < (endPos[0] +1)) && (cam.z > endPos[1]) && (cam.z < (endPos[1]+1))){
+		return true;
+	}
+
+	return false;
+}
+
+void loadNextMap(){
+	printf("GOOOAAAAALLL!!\n");
+}
+
 void moveCamera(){
+	if(isAtEnd()) loadNextMap();
+
 	if(glutKeyIsDown('w')){
 		vec3 moveVec = lookAtVector;
 		if(!wallCollision(VectorAdd(cam,ScalarMult(moveVec,movementSpeed))))

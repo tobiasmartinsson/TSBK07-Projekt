@@ -12,10 +12,14 @@ struct WallPiece{
 
 void initMap(GLuint program);
 void readMapFile(char* mapName, mat4 camMatrix);
-void reDrawWall(mat4 camMat);
+void reDrawMap(mat4 camMat);
+void updateLight();
+
 
 struct WallPiece wallList[10000];
 int numOfWalls;
+int startPos[2];
+int endPos[2];
 
 
 

@@ -10,7 +10,7 @@
 #include "LoadTGA.h"
 #include  "map.h"
 
-
+Model *phoneBooth;
 
 unsigned int vertexArrayObjID;
 unsigned int vertexBufferObjID;
@@ -51,16 +51,24 @@ GLfloat groundNormal[] = {
 
 int maxX = 0;
 int maxZ = 0;
-GLuint shaderProgram;
-GLuint oneTex, zeroTex;
-mat4 groundTransform, wallTransformT, wallTransformB, wallTransformL, wallTransformR;
+GLuint shaderProgram, phoneBoothProgram;
+GLuint oneTex, zeroTex, phoneBoothTex;
+mat4 groundTransform, wallTransformT, wallTransformB, wallTransformL, wallTransformR, phoneBoothTransform;
+
+mat4 projectionMat;
 
 void initMap(GLuint program){
   shaderProgram = program;
+
   LoadTGATextureSimple("number1.tga", &oneTex);
 	LoadTGATextureSimple("number0.tga", &zeroTex);
+	LoadTGATextureSimple("1796_phone_booth_01_D.tga", &phoneBoothTex);
+
+	phoneBoothProgram = loadShaders("phoneBooth.vert", "phoneBooth.frag");
+	phoneBooth = LoadModelPlus("phone_booth.obj");
 
   // Allocate and activate Vertex Array Object
+	glUseProgram(shaderProgram);
 	glGenVertexArrays(1, &vertexArrayObjID);
 	glBindVertexArray(vertexArrayObjID);
 	// Allocate Vertex Buffer Objects
@@ -93,6 +101,10 @@ void initMap(GLuint program){
 	glVertexAttribPointer(glGetAttribLocation(program, "inNormal"), 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(glGetAttribLocation(program, "inNormal"));
 
+	glUseProgram(phoneBoothProgram);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, phoneBoothTex);
+	glUniform1i(glGetUniformLocation(phoneBoothProgram, "texUnit"), 2);
 
 	groundTransform = IdentityMatrix();
   //groundTransform = Mult(Rx(M_PI/2), groundTransform);
@@ -112,6 +124,14 @@ void initMap(GLuint program){
 	wallTransformR = Mult(Ry(M_PI),wallTransformL);
 
 	numOfWalls = 0;
+	startPos[0] = 0;
+	startPos[1] = 0;
+	endPos[0] = 0;
+	endPos[1] = 0;
+
+	phoneBoothTransform = IdentityMatrix();
+	phoneBoothTransform = Mult(S(0.005,0.005,0.005),phoneBoothTransform);
+	projectionMat =  frustum(-0.1, 0.1, -0.1, 0.1, 0.2, 50.0);
 }
 
 void drawSquare(mat4 camMat, mat4 squareTransform){
@@ -121,19 +141,37 @@ void drawSquare(mat4 camMat, mat4 squareTransform){
 	glDrawArrays(GL_TRIANGLES, 0, 2*3);	// draw object
 }
 
-void drawFloor(mat4 camMatrix){
-	//Draws the ground
-	int i, j;
-  for(i = 0; i < maxX; i++){
-    for(j = 0; j < maxZ; j++){
-        groundTransform.m[3] = i;
-        groundTransform.m[11] = j;
-        drawSquare(camMatrix, groundTransform);
-    }
-  }
+
+int randSign(){
+	if(rand() % 2 == 0) return -1;
+	else return 1;
 }
 
-void reDrawWall(mat4 camMat){
+void generateRandomLightSequence (int wallNum){
+	int i;
+	for(i = 0; i < 64; i++){
+				if(randSign() < 0) wallList[wallNum].lightSequence[i] = 0.0f;
+				else wallList[wallNum].lightSequence[i] = 1.0f;
+	}
+}
+
+void updateLight(){
+	int i;
+	for(i = 0; i < numOfWalls; i++ ){
+		generateRandomLightSequence(i);
+	}
+}
+
+void drawPhoneBooth(mat4 camMat){
+	glUseProgram(phoneBoothProgram);
+	mat4 tmpPhoneBoothTrans = Mult(camMat, phoneBoothTransform);
+	glUniformMatrix4fv(glGetUniformLocation(phoneBoothProgram, "projMatrix"), 1, GL_TRUE, projectionMat.m);
+	glUniformMatrix4fv(glGetUniformLocation(phoneBoothProgram, "mdlMatrix"), 1, GL_TRUE, tmpPhoneBoothTrans.m);
+	DrawModel(phoneBooth,phoneBoothProgram,"inPosition",NULL,"inTexCoord");
+}
+
+void reDrawMap(mat4 camMat){
+	glUseProgram(shaderProgram);
 	int i;
 	GLfloat textureTimer = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
 	glUniform1f(glGetUniformLocation(shaderProgram, "textureTimer"), textureTimer);
@@ -145,27 +183,21 @@ void reDrawWall(mat4 camMat){
 		glUniform1fv(glGetUniformLocation(shaderProgram, "lightSequence"),64, wallList[i].lightSequence);
 		drawSquare(camMat, wallList[i].wallTrans);
 	}
-
-	drawFloor(camMat);
+	drawPhoneBooth(camMat);
+	//drawFloor(camMat);
 }
 
-int randSign(){
-	if(rand() % 2 == 0) return -1;
-	else return 1;
-}
-
-void generateRandomSequence (){
+void generateRandomSequence(){
 	int i;
 	for(i = 0; i < 64; i++){
 				if(randSign() < 0) wallList[numOfWalls].numberSequence[i] = 0.0f;
 				else wallList[numOfWalls].numberSequence[i] = 1.0f;
-
-				if(randSign() < 0) wallList[numOfWalls].lightSequence[i] = 0.0f;
-				else wallList[numOfWalls].lightSequence[i] = 1.0f;
 	}
 }
 
-void drawWall(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
+
+
+void addSquareToMap(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
   wallTrans.m[3] += x;
   wallTrans.m[11] += z;
 	wallList[numOfWalls].wallTrans = wallTrans;
@@ -175,6 +207,7 @@ void drawWall(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
 	wallList[numOfWalls].numberSequence[0] = 0.0f;
 	wallList[numOfWalls].lightSequence[0] = 0.0f;
 	generateRandomSequence();
+	generateRandomLightSequence(numOfWalls);
 	numOfWalls++;
 
 	glUniform1f(glGetUniformLocation(shaderProgram, "randomValue"), wallList[numOfWalls].textureSpeed);
@@ -189,32 +222,59 @@ void drawWall(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
 void evalutateChar(char c, mat4 camMatrix, int charNum, int lineNum){
 	switch (c) {
 		case 'T':
-			drawWall(camMatrix, wallTransformT, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, wallTransformT, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			break;
 		case 'B':
-			drawWall(camMatrix, wallTransformB, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, wallTransformB, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			break;
 		case 'L':
-			drawWall(camMatrix, wallTransformL, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, wallTransformL, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			break;
 		case 'R':
-			drawWall(camMatrix, wallTransformR, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, wallTransformR, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			break;
 		case '1':
-			drawWall(camMatrix, wallTransformT, charNum, lineNum, 'X');
-			drawWall(camMatrix, wallTransformL, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, wallTransformT, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, wallTransformL, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			break;
 		case '2':
-			drawWall(camMatrix, wallTransformT, charNum, lineNum, 'X');
-			drawWall(camMatrix, wallTransformR, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, wallTransformT, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, wallTransformR, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			break;
 		case '3':
-			drawWall(camMatrix, wallTransformB, charNum, lineNum, 'X');
-			drawWall(camMatrix, wallTransformL, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, wallTransformB, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, wallTransformL, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			break;
 		case '4':
-			drawWall(camMatrix, wallTransformB, charNum, lineNum, 'X');
-			drawWall(camMatrix, wallTransformR, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, wallTransformB, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, wallTransformR, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
+			break;
+		case 'G':
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
+			break;
+		case 'S':
+			addSquareToMap(camMatrix, wallTransformT, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, wallTransformL, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
+			startPos[0] = charNum;
+			startPos[1] = lineNum;
+			break;
+		case 'E':
+			addSquareToMap(camMatrix, wallTransformB, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, wallTransformR, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
+			endPos[0] = charNum;
+			endPos[1] = lineNum;
+			phoneBoothTransform.m[3] += endPos[0];
+			phoneBoothTransform.m[11] += endPos[1];
 			break;
 		default:
 			break;
