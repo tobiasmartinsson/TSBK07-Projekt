@@ -142,6 +142,7 @@ void reDrawWall(mat4 camMat){
 		glUniform1f(glGetUniformLocation(shaderProgram, "randomValue"), wallList[i].textureSpeed);
 		glUniform1f(glGetUniformLocation(shaderProgram, "randomValue2"), wallList[i].textureSpeed2);
 		glUniform1fv(glGetUniformLocation(shaderProgram, "numberSequence"),64, wallList[i].numberSequence);
+		glUniform1fv(glGetUniformLocation(shaderProgram, "lightSequence"),64, wallList[i].lightSequence);
 		drawSquare(camMat, wallList[i].wallTrans);
 	}
 
@@ -158,6 +159,9 @@ void generateRandomSequence (){
 	for(i = 0; i < 64; i++){
 				if(randSign() < 0) wallList[numOfWalls].numberSequence[i] = 0.0f;
 				else wallList[numOfWalls].numberSequence[i] = 1.0f;
+
+				if(randSign() < 0) wallList[numOfWalls].lightSequence[i] = 0.0f;
+				else wallList[numOfWalls].lightSequence[i] = 1.0f;
 	}
 }
 
@@ -169,12 +173,14 @@ void drawWall(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
 	wallList[numOfWalls].textureSpeed = randSign() * ((rand() % 25) +1.0f)/10.0f;
 	wallList[numOfWalls].textureSpeed2 = randSign() * ((rand() % 25) +1.0f)/10.0f;
 	wallList[numOfWalls].numberSequence[0] = 0.0f;
+	wallList[numOfWalls].lightSequence[0] = 0.0f;
 	generateRandomSequence();
 	numOfWalls++;
 
 	glUniform1f(glGetUniformLocation(shaderProgram, "randomValue"), wallList[numOfWalls].textureSpeed);
 	glUniform1f(glGetUniformLocation(shaderProgram, "randomValue2"), wallList[numOfWalls].textureSpeed2);
 	glUniform1fv(glGetUniformLocation(shaderProgram, "numberSequence"),64, wallList[numOfWalls].numberSequence);
+	glUniform1fv(glGetUniformLocation(shaderProgram, "numberSequence"),64, wallList[numOfWalls].lightSequence);
   drawSquare(camMatrix, wallTrans);
 }
 

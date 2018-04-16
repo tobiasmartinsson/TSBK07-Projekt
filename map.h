@@ -5,6 +5,7 @@ struct WallPiece{
   mat4 wallTrans;
   char wallType;
   float numberSequence[64];
+  float lightSequence[64];
   float textureSpeed;
   float textureSpeed2;
 };

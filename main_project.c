@@ -36,7 +36,7 @@ float movementSpeed = 0.05;
 void init(void)
 {
 	// GL inits
-	glClearColor(0.2,0.2,0.5,0);
+	glClearColor(0.0,0.0,0.0,0);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 	printError("GL inits");
