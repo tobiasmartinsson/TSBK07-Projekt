@@ -1,0 +1,4 @@
+Projektideer, effekter:
+Flera texturer med olika upplösning, de mer högupplösta är tydligare och längre fram(mipmap?).
+
+Ljuskälla på "kameran", standard ambient annars lyser "kameran" upp världen.

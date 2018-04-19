@@ -110,18 +110,18 @@ void initMap(GLuint program){
   //groundTransform = Mult(Rx(M_PI/2), groundTransform);
   groundTransform = Mult(T(0,0,0),groundTransform);
 
-	wallTransformT = Mult(Rx(M_PI/2), groundTransform);
-  wallTransformT = Mult(T(0,0.5,-0.5),wallTransformT);
+	wallTransformB = Mult(Rx(M_PI/2), groundTransform);
+  wallTransformB = Mult(T(0,0.5,0.5),wallTransformB);
 
-	wallTransformB = Mult(Ry(M_PI),wallTransformT);
+	wallTransformT = Mult(Ry(M_PI),wallTransformB);
   //wallTransformB = Mult(T(0,0,1),wallTransformB);
 
-  wallTransformL = Mult(Rz(M_PI/2), groundTransform);
-	wallTransformL = Mult(Rx(M_PI/2), wallTransformL);
-	wallTransformL = Mult(Ry(M_PI),wallTransformL);
-  wallTransformL = Mult(T(-0.5,0.5,0),wallTransformL);
+  wallTransformR = Mult(Rz(M_PI/2), groundTransform);
+	wallTransformR = Mult(Rx(M_PI/2), wallTransformR);
+	wallTransformR = Mult(Ry(M_PI),wallTransformR);
+  wallTransformR = Mult(T(0.5,0.5,0),wallTransformR);
 
-	wallTransformR = Mult(Ry(M_PI),wallTransformL);
+	wallTransformL = Mult(Ry(M_PI),wallTransformR);
 
 	numOfWalls = 0;
 	startPos[0] = 0;
@@ -130,7 +130,7 @@ void initMap(GLuint program){
 	endPos[1] = 0;
 
 	phoneBoothTransform = IdentityMatrix();
-	phoneBoothTransform = Mult(S(0.005,0.005,0.005),phoneBoothTransform);
+	phoneBoothTransform = Mult(S(0.004,0.004,0.004),phoneBoothTransform);
 	projectionMat =  frustum(-0.1, 0.1, -0.1, 0.1, 0.2, 50.0);
 }
 
@@ -260,21 +260,23 @@ void evalutateChar(char c, mat4 camMatrix, int charNum, int lineNum){
 		case 'G':
 			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			break;
-		case 'S':
+		case 'W':
 			addSquareToMap(camMatrix, wallTransformT, charNum, lineNum, 'X');
 			addSquareToMap(camMatrix, wallTransformL, charNum, lineNum, 'Z');
+			addSquareToMap(camMatrix, wallTransformB, charNum, lineNum, 'X');
+			addSquareToMap(camMatrix, wallTransformR, charNum, lineNum, 'Z');
+			break;
+		case 'S':
 			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			startPos[0] = charNum;
 			startPos[1] = lineNum;
 			break;
 		case 'E':
-			addSquareToMap(camMatrix, wallTransformB, charNum, lineNum, 'X');
-			addSquareToMap(camMatrix, wallTransformR, charNum, lineNum, 'Z');
 			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			endPos[0] = charNum;
 			endPos[1] = lineNum;
 			phoneBoothTransform.m[3] += endPos[0];
-			phoneBoothTransform.m[11] += endPos[1];
+			phoneBoothTransform.m[11] += endPos[1]+0.3;
 			break;
 		default:
 			break;

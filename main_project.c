@@ -41,7 +41,7 @@ void init(void)
 
 
 	// GL inits
-	glClearColor(1,0,0,0);
+	glClearColor(0,0,0,0);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 	printError("GL inits");
@@ -63,7 +63,7 @@ void init(void)
 
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	initMap(program);
-	readMapFile("map4.txt", camMatrix);
+	readMapFile("map3.txt", camMatrix);
 	cam.x = startPos[0];
 	cam.z = startPos[1];
 }
@@ -126,9 +126,9 @@ void display(void)
 void resetCamera(){
 	angleY= 0.0f;
 	angleX = 0.0f;
-	cam.x = 0;
+	cam.x = startPos[0];
 	cam.y = 0.25;
-	cam.z = 0;
+	cam.z = startPos[1];
 	lookAtVector.x = 1;
 	lookAtVector.y = 0;
 	lookAtVector.z = 1;
@@ -164,7 +164,7 @@ bool wallCollision(vec3 movementVector){
 }
 
 bool isAtEnd(){
-	if((cam.x > endPos[0]) && (cam.x < (endPos[0] +1)) && (cam.z > endPos[1]) && (cam.z < (endPos[1]+1))){
+	if((cam.x - (endPos[0]-0.5) > 0) && (cam.x - (endPos[0] +0.5) < 0) && (cam.z - (endPos[1]-0.5) > 0) && (cam.z -(endPos[1]+0.5) < 0)){
 		return true;
 	}
 
