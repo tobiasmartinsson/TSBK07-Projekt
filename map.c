@@ -52,7 +52,7 @@ GLfloat groundNormal[] = {
 int maxX = 0;
 int maxZ = 0;
 GLuint shaderProgram, phoneBoothProgram;
-GLuint oneTex, zeroTex, phoneBoothTex;
+GLuint oneTex, oneTex2, oneTex3, zeroTex, zeroTex2, zeroTex3, phoneBoothTex;
 mat4 groundTransform, wallTransformT, wallTransformB, wallTransformL, wallTransformR, phoneBoothTransform;
 
 mat4 projectionMat;
@@ -62,6 +62,10 @@ void initMap(GLuint program){
 
   LoadTGATextureSimple("number1.tga", &oneTex);
 	LoadTGATextureSimple("number0.tga", &zeroTex);
+	LoadTGATextureSimple("number0kopia.tga", &zeroTex2);
+	LoadTGATextureSimple("number0kopia2.tga", &zeroTex3);
+	LoadTGATextureSimple("number1kopia.tga", &oneTex2);
+	LoadTGATextureSimple("number1kopia2.tga", &oneTex3);
 	LoadTGATextureSimple("1796_phone_booth_01_D.tga", &phoneBoothTex);
 
 	phoneBoothProgram = loadShaders("phoneBooth.vert", "phoneBooth.frag");
@@ -77,10 +81,23 @@ void initMap(GLuint program){
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, oneTex);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit"), 0); // Texture unit 0
+	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit"), 0);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, zeroTex);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit2"), 1); // Texture unit 0
+	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit2"), 1);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, zeroTex2);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit22"), 3);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, zeroTex3);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit23"), 4);
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, oneTex2);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit12"), 5);
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D, oneTex3);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit13"), 6);
+
 
 	glGenBuffers(1, &groundTexCoordBufferObjID);  //TEXTURE
 
