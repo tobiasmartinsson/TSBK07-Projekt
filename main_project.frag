@@ -2,6 +2,7 @@
 
 out vec4 outColor;
 in vec3 normal_to_frag;
+in vec3 pos_to_fragment;
 in vec2 tex_to_fragment;
 
 uniform sampler2D texUnit;
@@ -17,6 +18,8 @@ uniform float randomValue2;
 
 uniform float numberSequence[64];
 uniform float lightSequence[64];
+
+uniform vec3 camPos;
 void main(void)
 {
 	vec4 tex,tex2,tex3;
@@ -54,35 +57,35 @@ void main(void)
 
 	vec4 color = vec4(0.0f,1.0f,0.0f,1.0f);
 	//vec3 light = normalize(vec3(0.0f,0.0f,10.0f));
-	//float shade = dot(normal_to_frag, light);
+	//float shade = dot(normal_to_frag, camPos);
 	//shade  = clamp(shade, 0,1);
 	float shade = 1.0f;
+
+	vec3 camToWallVec = (camPos-pos_to_fragment);
+	float distanceToWall = sqrt(pow(camToWallVec.x,2)+pow(camToWallVec.z,2));
+	/*if( distanceToWall < 2.0f){
+		shade = 1.0f;
+	}else if(distanceToWall < 1.5f){
+		shade = 0.7f;
+	}
+	else if(distanceToWall < 1f){
+		shade = 0.7f;
+	}*/
+	shade = shade - distanceToWall/4;
+
 	if(lightSequence[int(mod(listIndex,64))] >= 1){
-			shade = 1.0f;
+			shade *= 1.0f;
 	}else{
-			shade = 0.5f;
-			/*if(mod(int(mod(listIndex,64)),8) < 7){
-				if(lightSequence[int(mod(listIndex,63))+1] == 1.0f){
-					shade = 0.5f;
-					color = vec4(1.0f,0,0,1.0f);
-				}
-			}
-			if(mod(int(mod(listIndex,64)),8) > 0){
-				if(lightSequence[int(mod(listIndex,63))-1] == 1.0f){
-					shade = 0.5f;
-					color = vec4(0,0,1.0f,1.0f);
-				}
-			}*/
+			shade *= 0.5f;
+
 	}
 
 	/*if(mod(int(mod(listIndex,64)),8) == 7){
 		shade = 0.5f;
 		color = vec4(1,1,1,1);
 	}*/
-
-
 	//vec3 shading =  vec3(shade);
-	shade  = clamp(shade, 0,1);
+	//shade  = clamp(shade, 0,1);
 	tex = tex +0.2*tex3 + 0.6*tex2;
 	outColor = color*shade*tex;
 }

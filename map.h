@@ -12,7 +12,7 @@ struct WallPiece{
 
 void initMap(GLuint program);
 void readMapFile(char* mapName, mat4 camMatrix);
-void reDrawMap(mat4 camMat);
+void reDrawMap(mat4 camMat, vec3 camPos);
 void updateLight();
 
 

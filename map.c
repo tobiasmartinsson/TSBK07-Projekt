@@ -152,7 +152,7 @@ void initMap(GLuint program){
 }
 
 void drawSquare(mat4 camMat, mat4 squareTransform){
-	squareTransform = Mult(camMat, squareTransform);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "camMatrix"), 1, GL_TRUE, camMat.m);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "mdlMatrix"), 1, GL_TRUE, squareTransform.m);
 	glBindVertexArray(vertexArrayObjID);	// Select VAO
 	glDrawArrays(GL_TRIANGLES, 0, 2*3);	// draw object
@@ -179,19 +179,21 @@ void updateLight(){
 	}
 }
 
-void drawPhoneBooth(mat4 camMat){
+void drawPhoneBooth(mat4 camMat, vec3 camPos){
 	glUseProgram(phoneBoothProgram);
-	mat4 tmpPhoneBoothTrans = Mult(camMat, phoneBoothTransform);
 	glUniformMatrix4fv(glGetUniformLocation(phoneBoothProgram, "projMatrix"), 1, GL_TRUE, projectionMat.m);
-	glUniformMatrix4fv(glGetUniformLocation(phoneBoothProgram, "mdlMatrix"), 1, GL_TRUE, tmpPhoneBoothTrans.m);
+	glUniformMatrix4fv(glGetUniformLocation(phoneBoothProgram, "camMatrix"), 1, GL_TRUE, camMat.m);
+	glUniformMatrix4fv(glGetUniformLocation(phoneBoothProgram, "mdlMatrix"), 1, GL_TRUE, phoneBoothTransform.m);
+	glUniform3fv(glGetUniformLocation(shaderProgram, "camPos"),1, &camPos.x);
 	DrawModel(phoneBooth,phoneBoothProgram,"inPosition",NULL,"inTexCoord");
 }
 
-void reDrawMap(mat4 camMat){
+void reDrawMap(mat4 camMat, vec3 camPos){
 	glUseProgram(shaderProgram);
 	int i;
 	GLfloat textureTimer = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
 	glUniform1f(glGetUniformLocation(shaderProgram, "textureTimer"), textureTimer);
+	glUniform3fv(glGetUniformLocation(shaderProgram, "camPos"),1, &camPos.x);
 
 	for(i = 0; i < numOfWalls; i++ ){
 		glUniform1f(glGetUniformLocation(shaderProgram, "randomValue"), wallList[i].textureSpeed);
@@ -200,7 +202,7 @@ void reDrawMap(mat4 camMat){
 		glUniform1fv(glGetUniformLocation(shaderProgram, "lightSequence"),64, wallList[i].lightSequence);
 		drawSquare(camMat, wallList[i].wallTrans);
 	}
-	drawPhoneBooth(camMat);
+	drawPhoneBooth(camMat, camPos);
 	//drawFloor(camMat);
 }
 
@@ -292,12 +294,20 @@ void evalutateChar(char c, mat4 camMatrix, int charNum, int lineNum){
 			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
 			endPos[0] = charNum;
 			endPos[1] = lineNum;
+			phoneBoothTransform = IdentityMatrix();
+			phoneBoothTransform = Mult(S(0.004,0.004,0.004),phoneBoothTransform);
 			phoneBoothTransform.m[3] += endPos[0];
 			phoneBoothTransform.m[11] += endPos[1]+0.3;
 			break;
 		default:
 			break;
 	}
+}
+
+void resetMapStuff(){
+	memset(wallList, 0, sizeof(wallList));
+	phoneBoothTransform = IdentityMatrix();
+	phoneBoothTransform = Mult(S(0.004,0.004,0.004),phoneBoothTransform);
 }
 
 void readMapFile(char* mapName, mat4 camMatrix){
@@ -307,10 +317,11 @@ void readMapFile(char* mapName, mat4 camMatrix){
   size_t size = 100;
   int lineNum = 0;
 
+	resetMapStuff();
+
   while(getline(&curLine, &size, mapFile) != -1){
     int charNum = 0;
     char c = *curLine;
-
     while(c){
       //printf("%c \n",c);
 			evalutateChar(c, camMatrix, charNum, lineNum);

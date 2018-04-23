@@ -35,10 +35,18 @@ GLfloat totalXRot = 0;
 mat4 total, modelView, camMatrix;
 
 float movementSpeed = 0.05;
+int totalNumOfMaps = 6;
+char * mapList[10] = {};
+int currentMap;
 void init(void)
 {
-
-
+	mapList[0] = "map0.txt";
+	mapList[1] = "map1.txt";
+	mapList[2] = "map2.txt";
+	mapList[3] = "map3.txt";
+	mapList[4] = "map4.txt";
+	mapList[5] = "map5.txt";
+	currentMap = 0;
 
 	// GL inits
 	glClearColor(0,0,0,0);
@@ -63,7 +71,7 @@ void init(void)
 
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	initMap(program);
-	readMapFile("map3.txt", camMatrix);
+	readMapFile(mapList[0], camMatrix);
 	cam.x = startPos[0];
 	cam.z = startPos[1];
 }
@@ -119,7 +127,7 @@ void display(void)
 	}
 
 
-	reDrawMap(camMatrix);
+	reDrawMap(camMatrix, cam);
 	glutSwapBuffers();
 }
 
@@ -147,14 +155,17 @@ bool wallCollision(vec3 movementVector){
 			float dist = 1000;
 
 			if(wallList[j].wallType == 'X'){
-				if(sqrt(pow(wallX-movementVector.x,2)) < 0.5)
+				if(sqrt(pow(wallX-movementVector.x,2)) < 0.5){
 					dist = sqrt(pow(wallZ-movementVector.z,2));
+				}
 			}else if(wallList[j].wallType == 'Z'){
-				if(sqrt(pow(wallZ-movementVector.z,2)) < 0.5)
-				dist = sqrt(pow(wallX-movementVector.x,2));
+				if(sqrt(pow(wallZ-movementVector.z,2)) < 0.5){
+					dist = sqrt(pow(wallX-movementVector.x,2));
+				}
 			}
+//0.65
 			//printf("%.2f\n",dist );
-			if(dist < 0.25f){
+			if(sqrt(pow(dist,2)) <= 0.25f){
 				//printf("true");
 				return true;
 			}
@@ -172,13 +183,21 @@ bool isAtEnd(){
 }
 
 void loadNextMap(){
-	printf("GOOOAAAAALLL!!\n");
+	if(currentMap < totalNumOfMaps-1){
+		currentMap++;
+		resetCamera();
+		readMapFile(mapList[currentMap], camMatrix);
+		cam.x = startPos[0];
+		cam.z = startPos[1];
+		printf("%d\n", currentMap );
+	}else
+		printf("no more maps\n");
 }
 
 void moveCamera(){
 	if(isAtEnd()) loadNextMap();
 
-	if(glutKeyIsDown('w')){
+	if(glutKeyIsDown('w') || glutKeyIsDown('W')){
 		vec3 moveVec = lookAtVector;
 		if(!wallCollision(VectorAdd(cam,ScalarMult(moveVec,movementSpeed))))
 			cam = VectorAdd(cam,ScalarMult(moveVec,movementSpeed));
@@ -186,29 +205,29 @@ void moveCamera(){
 		if(!freeCam)
 			cam.y = 0.25;
 	}
-	if(glutKeyIsDown('s')){
+	if(glutKeyIsDown('s') || glutKeyIsDown('S')){
 		vec3 moveVec = lookAtVector;
 		if(!wallCollision(VectorSub(cam,ScalarMult(moveVec,movementSpeed))))
 			cam = VectorSub(cam,ScalarMult(moveVec,movementSpeed));
 		if(!freeCam)
 			cam.y = 0.25;
 	}
-	if(glutKeyIsDown('a')){
+	if(glutKeyIsDown('a') || glutKeyIsDown('A')){
 
 		vec3 left = Normalize(CrossProduct(up, lookAtVector));
 		if(!wallCollision(VectorAdd(cam, ScalarMult(left,movementSpeed))))
 			cam = VectorAdd(cam, ScalarMult(left,movementSpeed));
 	}
-	if(glutKeyIsDown('d')){
+	if(glutKeyIsDown('d') || glutKeyIsDown('d')){
 		vec3 right = Normalize(CrossProduct(lookAtVector,up));
 		if(!wallCollision(VectorAdd(cam, ScalarMult(right,movementSpeed))))
 			cam = VectorAdd(cam, ScalarMult(right,movementSpeed));
 	}
-	if(glutKeyIsDown('r')){
+	if(glutKeyIsDown('r') || glutKeyIsDown('R')){
 		resetCamera();
 	}
 
-	if(glutKeyIsDown('t')){
+	if(glutKeyIsDown('t') || glutKeyIsDown('T')){
 			freeCam = !freeCam;
 	}
 }
