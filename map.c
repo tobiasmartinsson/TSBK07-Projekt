@@ -10,7 +10,7 @@
 #include "LoadTGA.h"
 #include  "map.h"
 
-Model *phoneBooth;
+Model *phoneBooth, *agentModel;
 
 unsigned int vertexArrayObjID;
 unsigned int vertexBufferObjID;
@@ -51,9 +51,9 @@ GLfloat groundNormal[] = {
 
 int maxX = 0;
 int maxZ = 0;
-GLuint shaderProgram, phoneBoothProgram;
+GLuint shaderProgram, phoneBoothProgram, agentProgram;
 GLuint oneTex, oneTex2, oneTex3, zeroTex, zeroTex2, zeroTex3, phoneBoothTex;
-mat4 groundTransform, wallTransformT, wallTransformB, wallTransformL, wallTransformR, phoneBoothTransform;
+mat4 groundTransform, wallTransformT, wallTransformB, wallTransformL, wallTransformR, phoneBoothTransform, agentTransform;
 
 mat4 projectionMat;
 
@@ -70,6 +70,9 @@ void initMap(GLuint program){
 
 	phoneBoothProgram = loadShaders("phoneBooth.vert", "phoneBooth.frag");
 	phoneBooth = LoadModelPlus("phone_booth.obj");
+
+	agentProgram = loadShaders("agent.vert", "agent.frag");
+	agentModel = LoadModelPlus("agent-model.obj");
 
   // Allocate and activate Vertex Array Object
 	glUseProgram(shaderProgram);
@@ -148,6 +151,11 @@ void initMap(GLuint program){
 
 	phoneBoothTransform = IdentityMatrix();
 	phoneBoothTransform = Mult(S(0.004,0.004,0.004),phoneBoothTransform);
+
+	agentTransform = IdentityMatrix();
+	agentTransform = Mult(S(0.07,0.07,0.07),agentTransform);
+
+
 	projectionMat =  frustum(-0.1, 0.1, -0.1, 0.1, 0.2, 50.0);
 }
 
@@ -188,6 +196,29 @@ void drawPhoneBooth(mat4 camMat, vec3 camPos){
 	DrawModel(phoneBooth,phoneBoothProgram,"inPosition",NULL,"inTexCoord");
 }
 
+void drawAgent(mat4 camMat, vec3 camPos){
+	glUseProgram(agentProgram);
+	vec3 v = {camPos.x-agentTransform.m[3], camPos.y-agentTransform.m[7], camPos.z-agentTransform.m[11]};
+	mat4 agentRotation = Ry(M_PI+atan(v.x/v.z));
+	mat4 tmpAgentTransform = agentTransform;
+	tmpAgentTransform.m[3] = 0;
+ 	tmpAgentTransform.m[7] = 0;
+ 	tmpAgentTransform.m[11] = 0;
+	tmpAgentTransform = Mult(agentRotation, agentTransform);
+	tmpAgentTransform.m[3] = agentTransform.m[3];
+ 	tmpAgentTransform.m[7] = agentTransform.m[7];
+ 	tmpAgentTransform.m[11] = agentTransform.m[11];
+	printf("x: %.2f,", tmpAgentTransform.m[3]);
+	printf("y: %.2f,", tmpAgentTransform.m[7]);
+	printf("z: %.2f\n", tmpAgentTransform.m[11]);
+	glUniformMatrix4fv(glGetUniformLocation(agentProgram, "projMatrix"), 1, GL_TRUE, projectionMat.m);
+	glUniformMatrix4fv(glGetUniformLocation(agentProgram, "camMatrix"), 1, GL_TRUE, camMat.m);
+	glUniformMatrix4fv(glGetUniformLocation(agentProgram, "mdlMatrix"), 1, GL_TRUE, tmpAgentTransform.m);
+	glUniform3fv(glGetUniformLocation(agentProgram, "camPos"),1, &camPos.x);
+	DrawWireframeModel(agentModel,agentProgram,"inPosition",NULL,NULL);
+}
+
+
 void reDrawMap(mat4 camMat, vec3 camPos){
 	glUseProgram(shaderProgram);
 	int i;
@@ -203,6 +234,7 @@ void reDrawMap(mat4 camMat, vec3 camPos){
 		drawSquare(camMat, wallList[i].wallTrans);
 	}
 	drawPhoneBooth(camMat, camPos);
+	drawAgent(camMat, camPos);
 	//drawFloor(camMat);
 }
 
@@ -299,6 +331,12 @@ void evalutateChar(char c, mat4 camMatrix, int charNum, int lineNum){
 			phoneBoothTransform.m[3] += endPos[0];
 			phoneBoothTransform.m[11] += endPos[1]+0.3;
 			break;
+		case 'A':
+			addSquareToMap(camMatrix, groundTransform, charNum, lineNum, 'G');
+			agentTransform = IdentityMatrix();
+			agentTransform = Mult(S(0.07,0.07,0.07),agentTransform);
+			agentTransform.m[3] += charNum;
+			agentTransform.m[11] += lineNum;
 		default:
 			break;
 	}
