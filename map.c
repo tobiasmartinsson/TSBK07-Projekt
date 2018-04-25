@@ -198,6 +198,9 @@ void drawPhoneBooth(mat4 camMat, vec3 camPos){
 
 void drawAgent(mat4 camMat, vec3 camPos){
 	glUseProgram(agentProgram);
+	agentTransform.m[3] = agentPos[0];
+	agentTransform.m[11] = agentPos[2];
+
 	vec3 v = {camPos.x-agentTransform.m[3], camPos.y-agentTransform.m[7], camPos.z-agentTransform.m[11]};
 	mat4 agentRotation = Ry(M_PI+atan(v.x/v.z));
 	mat4 tmpAgentTransform = agentTransform;
@@ -208,9 +211,11 @@ void drawAgent(mat4 camMat, vec3 camPos){
 	tmpAgentTransform.m[3] = agentTransform.m[3];
  	tmpAgentTransform.m[7] = agentTransform.m[7];
  	tmpAgentTransform.m[11] = agentTransform.m[11];
-	printf("x: %.2f,", tmpAgentTransform.m[3]);
+
+
+	/*printf("x: %.2f,", tmpAgentTransform.m[3]);
 	printf("y: %.2f,", tmpAgentTransform.m[7]);
-	printf("z: %.2f\n", tmpAgentTransform.m[11]);
+	printf("z: %.2f\n", tmpAgentTransform.m[11]);*/
 	glUniformMatrix4fv(glGetUniformLocation(agentProgram, "projMatrix"), 1, GL_TRUE, projectionMat.m);
 	glUniformMatrix4fv(glGetUniformLocation(agentProgram, "camMatrix"), 1, GL_TRUE, camMat.m);
 	glUniformMatrix4fv(glGetUniformLocation(agentProgram, "mdlMatrix"), 1, GL_TRUE, tmpAgentTransform.m);
@@ -337,6 +342,8 @@ void evalutateChar(char c, mat4 camMatrix, int charNum, int lineNum){
 			agentTransform = Mult(S(0.07,0.07,0.07),agentTransform);
 			agentTransform.m[3] += charNum;
 			agentTransform.m[11] += lineNum;
+			agentPos[0] = agentTransform.m[3];
+			agentPos[2] = agentTransform.m[11];
 		default:
 			break;
 	}

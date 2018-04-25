@@ -20,7 +20,7 @@ struct WallPiece wallList[10000];
 int numOfWalls;
 int startPos[2];
 int endPos[2];
-
+GLfloat agentPos[3];
 
 
 #endif

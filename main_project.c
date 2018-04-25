@@ -1,5 +1,3 @@
-// Lab 4, terrain generation
-
 #ifdef __APPLE__
 #include <OpenGL/gl3.h>
 // Linking hint for Lightweight IDE
@@ -15,9 +13,6 @@
 
 mat4 projectionMatrix;
 
-
-
-// Reference to shader program
 GLuint program;
 
 GLfloat angleY;
@@ -174,6 +169,51 @@ bool wallCollision(vec3 movementVector){
 	return false;
 }
 
+bool agentSeesPlayer(GLfloat *agentPos, vec3 playerPos){
+	int i;
+	vec3 agentPosition = {agentPos[0], agentPos[1], agentPos[2]};
+	vec3 moveDirection = VectorSub(playerPos, agentPosition);
+		for(i = 0; i < numOfWalls; i++){
+			float wallX = wallList[i].wallTrans.m[3];
+			float wallZ = wallList[i].wallTrans.m[11];
+
+
+			if(wallList[i].wallType == 'X'){
+				vec3 normal = {0,0,1};
+				if(!(DotProduct(normal, moveDirection) == 0)){
+						vec3 p = {wallX,0.25,wallZ};
+						float D = DotProduct(normal,p);
+						float u = (D - DotProduct(normal, agentPosition))/(DotProduct(normal, moveDirection));
+						printf("%.2f\n", u);
+						if((u > 0)&&( u < 1)){
+							vec3 planePoint = VectorAdd(agentPosition, ScalarMult(moveDirection,u));
+							if((planePoint.x > wallX-0.5)&&(planePoint.x < wallX+0.5)){
+								printf("1!!!!\n");
+								return false;
+							}
+						}
+				}
+			}else if(wallList[i].wallType == 'Z'){
+				vec3 normal = {1,0,0};
+				float j;
+				if(!(DotProduct(normal, moveDirection) == 0)){
+					vec3 p = {wallX,0.25,wallZ};
+					float D = DotProduct(normal,p);
+					float u = (D - DotProduct(normal, agentPosition))/(DotProduct(normal, moveDirection));
+					printf("%.2f\n", u);
+					if((u > 0)&&( u < 1)){
+						vec3 planePoint = VectorAdd(agentPosition, ScalarMult(moveDirection,u));
+						if((planePoint.z > wallZ-0.5)&&(planePoint.z < wallZ+0.5)){
+							printf("1!!!!\n");
+							return false;
+						}
+					}
+				}
+			}
+		}
+	return true;
+}
+
 bool isAtEnd(){
 	if((cam.x - (endPos[0]-0.5) > 0) && (cam.x - (endPos[0] +0.5) < 0) && (cam.z - (endPos[1]-0.5) > 0) && (cam.z -(endPos[1]+0.5) < 0)){
 		return true;
@@ -192,6 +232,16 @@ void loadNextMap(){
 		printf("%d\n", currentMap );
 	}else
 		printf("no more maps\n");
+}
+
+void tryMoveAgent(){
+	if(agentSeesPlayer(agentPos, cam)){
+		printf("im moving!\n");
+		vec3 agentVec = {agentPos[0],agentPos[1],agentPos[2]};
+		vec3 aToC = Normalize(VectorSub(cam,agentVec));
+		agentPos[0] += aToC.x*0.01;
+		agentPos[2] += aToC.z*0.01;
+	}
 }
 
 void moveCamera(){
@@ -237,14 +287,13 @@ void timer(int i)
 	glutTimerFunc(20, &timer, i);
 	glutPostRedisplay();
 	moveCamera();
+	tryMoveAgent();
 }
 
 	int prevX = 0;
 	int prevY = 0;
 	void mouse(int x, int y)
 	{
-		//printf("%d %d\n", x, y);
-
 		if(!glutKeyIsDown('b')){
 			glutHideCursor();
 			if((x != prevX) || (y != prevY)){
