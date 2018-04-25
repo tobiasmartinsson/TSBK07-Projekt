@@ -204,6 +204,7 @@ GLfloat absPro(GLfloat a){
 void drawAgent(mat4 camMat, vec3 camPos){
 	glUseProgram(agentProgram);
 	agentTransform.m[3] = agentPos[0];
+	agentTransform.m[7] = agentPos[1];
 	agentTransform.m[11] = agentPos[2];
 
 	vec3 v = {camPos.x-agentTransform.m[3],camPos.y-agentTransform.m[7], camPos.z-agentTransform.m[11]};
@@ -348,6 +349,7 @@ void evalutateChar(char c, mat4 camMatrix, int charNum, int lineNum){
 			agentTransform.m[3] += charNum;
 			agentTransform.m[11] += lineNum;
 			agentPos[0] = agentTransform.m[3];
+			agentPos[1] = agentTransform.m[7];
 			agentPos[2] = agentTransform.m[11];
 		default:
 			break;
@@ -358,6 +360,11 @@ void resetMapStuff(){
 	memset(wallList, 0, sizeof(wallList));
 	phoneBoothTransform = IdentityMatrix();
 	phoneBoothTransform = Mult(S(0.004,0.004,0.004),phoneBoothTransform);
+	agentTransform = IdentityMatrix();
+	agentTransform = Mult(S(0.07,0.07,0.07),agentTransform);
+	agentPos[0] = 0;
+	agentPos[1] = -10;
+	agentPos[2] = 0;
 }
 
 void readMapFile(char* mapName, mat4 camMatrix){

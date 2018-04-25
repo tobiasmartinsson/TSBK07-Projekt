@@ -25,7 +25,6 @@ void main(void)
 	vec4 tex,tex2,tex3;
 	vec2 texCoords, texCoords2, texCoords3;
 	float speed = 0;
-	//change to *X for number of vertical lines
 	if(mod(tex_to_fragment.s ,2) > 1){
 		if(mod(tex_to_fragment.s/2,2) > 1.5){
 			speed += textureTimer*randomValue;
@@ -39,6 +38,8 @@ void main(void)
 			speed -= textureTimer*randomValue2 * 2.3f;
 		}
 	}
+
+	/*Different speeds and textures for the 3 different texture layers*/
 	texCoords =  vec2(tex_to_fragment.s, tex_to_fragment.t+speed);
 	texCoords2 = vec2(tex_to_fragment.s, tex_to_fragment.t+0.7*speed);
 	texCoords3 = vec2(tex_to_fragment.s, tex_to_fragment.t+0.5*speed);
@@ -55,22 +56,13 @@ void main(void)
 		tex3 = texture(texUnit2,texCoords3);
 	}
 
-	vec4 color = vec4(0.0f,1.0f,0.0f,1.0f);
-	//vec3 light = normalize(vec3(0.0f,0.0f,10.0f));
-	//float shade = dot(normal_to_frag, camPos);
-	//shade  = clamp(shade, 0,1);
+
 	float shade = 1.0f;
 
+	/*Check distance from camera to fragment, creates "shadow/lightsource effect"
+	 	with the camera as the light source*/
 	vec3 camToWallVec = (camPos-pos_to_fragment);
 	float distanceToWall = sqrt(pow(camToWallVec.x,2)+pow(camToWallVec.z,2));
-	/*if( distanceToWall < 2.0f){
-		shade = 1.0f;
-	}else if(distanceToWall < 1.5f){
-		shade = 0.7f;
-	}
-	else if(distanceToWall < 1f){
-		shade = 0.7f;
-	}*/
 	shade = shade - distanceToWall/4;
 
 	if(lightSequence[int(mod(listIndex,64))] >= 1){
@@ -80,12 +72,6 @@ void main(void)
 
 	}
 
-	/*if(mod(int(mod(listIndex,64)),8) == 7){
-		shade = 0.5f;
-		color = vec4(1,1,1,1);
-	}*/
-	//vec3 shading =  vec3(shade);
-	//shade  = clamp(shade, 0,1);
 	tex = tex +0.2*tex3 + 0.6*tex2;
-	outColor = color*shade*tex;
+	outColor = vec4(0.0f,1.0f,0.0f,1.0f)*shade*tex;
 }

@@ -35,6 +35,7 @@ char * mapList[10] = {};
 int currentMap;
 void init(void)
 {
+	//Add an entry in the maplist and increase totalNumOfMaps to add another map to the game
 	mapList[0] = "map0.txt";
 	mapList[1] = "map1.txt";
 	mapList[2] = "map2.txt";
@@ -95,6 +96,7 @@ void display(void)
 		up = MultVec3(Ry(angleY), up);
 	}
 
+	//reset the rotation of the camera
 	angleX = 0;
 	angleY = 0;
 
@@ -121,7 +123,6 @@ void display(void)
 		pastT = t/1000;
 	}
 
-
 	reDrawMap(camMatrix, cam);
 	glutSwapBuffers();
 }
@@ -142,14 +143,21 @@ void resetCamera(){
 }
 
 bool wallCollision(vec3 movementVector){
+	/*function for checking if the players next move(along movementVector)
+		results in a collision with a wall*/
 	int j;
-	if(movementVector.y <= 1.0f){
+	//If the player is not in freeCam mode, check for collision
+	if(!freeCam){
 		for(j = 0; j < numOfWalls; j++){
+			//The current walls center X and Z position
 			float wallX = wallList[j].wallTrans.m[3];
 			float wallZ = wallList[j].wallTrans.m[11];
 			float dist = 1000;
 
+			/*Depending on the walltype(axis alignment) different
+				calculations for collision will be done*/
 			if(wallList[j].wallType == 'X'){
+				//Check if the player(camera) is "in front" of the wall(wallX-0.5 < camera.X < wallX + 0.5)
 				if(sqrt(pow(wallX-movementVector.x,2)) < 0.5){
 					dist = sqrt(pow(wallZ-movementVector.z,2));
 				}
@@ -167,27 +175,35 @@ bool wallCollision(vec3 movementVector){
 }
 
 bool isInsideAgent(){
-	if(sqrt(pow(cam.x-agentPos[0],2) + pow(cam.z - agentPos[2],2)) < 0.25){
-		return true;
+	if((agentPos[1] > 0)){
+		if(sqrt(pow(cam.x-agentPos[0],2) + pow(cam.z - agentPos[2],2)) < 0.25){
+			return true;
+		}
 	}
 	return false;
 }
 
 bool agentSeesPlayer(GLfloat *agentPos, vec3 playerPos){
+	/*Check if the player is in line of sight for the agent*/
 	int i;
 	vec3 agentPosition = {agentPos[0], agentPos[1], agentPos[2]};
 	vec3 moveDirection = VectorSub(playerPos, agentPosition);
+
 		for(i = 0; i < numOfWalls; i++){
 			float wallX = wallList[i].wallTrans.m[3];
 			float wallZ = wallList[i].wallTrans.m[11];
 
+			//Check what walltype the current wall is(aka which axis it is aligned with)
 			if(wallList[i].wallType == 'X'){
 				vec3 normal = {0,0,1};
+				//Check if line of sight vector is parallel with wall
 				if(!(DotProduct(normal, moveDirection) == 0)){
 						vec3 p = {wallX,0.25,wallZ};
+						//Check if the line of sight vector intersects with the current walls plane
 						float D = DotProduct(normal,p);
 						float u = (D - DotProduct(normal, agentPosition))/(DotProduct(normal, moveDirection));
 						if((u > 0)&&( u < 1)){
+							//If an intersection exists check if the intersetion point in the plane actually is contained in the wall
 							vec3 planePoint = VectorAdd(agentPosition, ScalarMult(moveDirection,u));
 							if((planePoint.x > wallX-0.5)&&(planePoint.x < wallX+0.5)){
 								return false;
@@ -196,7 +212,6 @@ bool agentSeesPlayer(GLfloat *agentPos, vec3 playerPos){
 				}
 			}else if(wallList[i].wallType == 'Z'){
 				vec3 normal = {1,0,0};
-				float j;
 				if(!(DotProduct(normal, moveDirection) == 0)){
 					vec3 p = {wallX,0.25,wallZ};
 					float D = DotProduct(normal,p);
@@ -214,10 +229,10 @@ bool agentSeesPlayer(GLfloat *agentPos, vec3 playerPos){
 }
 
 bool isAtEnd(){
+	//Check if the player(camera) is at the end(phoneBooth)
 	if((cam.x - (endPos[0]-0.5) > 0) && (cam.x - (endPos[0] +0.5) < 0) && (cam.z - (endPos[1]-0.5) > 0) && (cam.z -(endPos[1]+0.5) < 0)){
 		return true;
 	}
-
 	return false;
 }
 
@@ -242,11 +257,13 @@ void loadCurrentMap(){
 }
 
 void tryMoveAgent(){
-	if(agentSeesPlayer(agentPos, cam)){
-		vec3 agentVec = {agentPos[0],agentPos[1],agentPos[2]};
-		vec3 aToC = Normalize(VectorSub(cam,agentVec));
-		agentPos[0] += aToC.x*0.01;
-		agentPos[2] += aToC.z*0.01;
+	if(!agentPos[1] > 0){
+		if(agentSeesPlayer(agentPos, cam)){
+			vec3 agentVec = {agentPos[0],agentPos[1],agentPos[2]};
+			vec3 aToC = Normalize(VectorSub(cam,agentVec));
+			agentPos[0] += aToC.x*0.01;
+			agentPos[2] += aToC.z*0.01;
+		}
 	}
 }
 
@@ -270,12 +287,11 @@ void moveCamera(){
 			cam.y = 0.25;
 	}
 	if(glutKeyIsDown('a') || glutKeyIsDown('A')){
-
 		vec3 left = Normalize(CrossProduct(up, lookAtVector));
 		if(!wallCollision(VectorAdd(cam, ScalarMult(left,movementSpeed))))
 			cam = VectorAdd(cam, ScalarMult(left,movementSpeed));
 	}
-	if(glutKeyIsDown('d') || glutKeyIsDown('d')){
+	if(glutKeyIsDown('d') || glutKeyIsDown('D')){
 		vec3 right = Normalize(CrossProduct(lookAtVector,up));
 		if(!wallCollision(VectorAdd(cam, ScalarMult(right,movementSpeed))))
 			cam = VectorAdd(cam, ScalarMult(right,movementSpeed));
