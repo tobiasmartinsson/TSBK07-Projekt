@@ -158,13 +158,17 @@ bool wallCollision(vec3 movementVector){
 					dist = sqrt(pow(wallX-movementVector.x,2));
 				}
 			}
-//0.65
-			//printf("%.2f\n",dist );
 			if(sqrt(pow(dist,2)) <= 0.25f){
-				//printf("true");
 				return true;
 			}
 		}
+	}
+	return false;
+}
+
+bool isInsideAgent(){
+	if(sqrt(pow(cam.x-agentPos[0],2) + pow(cam.z - agentPos[2],2)) < 0.25){
+		return true;
 	}
 	return false;
 }
@@ -177,18 +181,15 @@ bool agentSeesPlayer(GLfloat *agentPos, vec3 playerPos){
 			float wallX = wallList[i].wallTrans.m[3];
 			float wallZ = wallList[i].wallTrans.m[11];
 
-
 			if(wallList[i].wallType == 'X'){
 				vec3 normal = {0,0,1};
 				if(!(DotProduct(normal, moveDirection) == 0)){
 						vec3 p = {wallX,0.25,wallZ};
 						float D = DotProduct(normal,p);
 						float u = (D - DotProduct(normal, agentPosition))/(DotProduct(normal, moveDirection));
-						printf("%.2f\n", u);
 						if((u > 0)&&( u < 1)){
 							vec3 planePoint = VectorAdd(agentPosition, ScalarMult(moveDirection,u));
 							if((planePoint.x > wallX-0.5)&&(planePoint.x < wallX+0.5)){
-								printf("1!!!!\n");
 								return false;
 							}
 						}
@@ -200,11 +201,9 @@ bool agentSeesPlayer(GLfloat *agentPos, vec3 playerPos){
 					vec3 p = {wallX,0.25,wallZ};
 					float D = DotProduct(normal,p);
 					float u = (D - DotProduct(normal, agentPosition))/(DotProduct(normal, moveDirection));
-					printf("%.2f\n", u);
 					if((u > 0)&&( u < 1)){
 						vec3 planePoint = VectorAdd(agentPosition, ScalarMult(moveDirection,u));
 						if((planePoint.z > wallZ-0.5)&&(planePoint.z < wallZ+0.5)){
-							printf("1!!!!\n");
 							return false;
 						}
 					}
@@ -234,9 +233,16 @@ void loadNextMap(){
 		printf("no more maps\n");
 }
 
+void loadCurrentMap(){
+		resetCamera();
+		readMapFile(mapList[currentMap], camMatrix);
+		cam.x = startPos[0];
+		cam.z = startPos[1];
+		printf("%d\n", currentMap );
+}
+
 void tryMoveAgent(){
 	if(agentSeesPlayer(agentPos, cam)){
-		printf("im moving!\n");
 		vec3 agentVec = {agentPos[0],agentPos[1],agentPos[2]};
 		vec3 aToC = Normalize(VectorSub(cam,agentVec));
 		agentPos[0] += aToC.x*0.01;
@@ -246,6 +252,7 @@ void tryMoveAgent(){
 
 void moveCamera(){
 	if(isAtEnd()) loadNextMap();
+	if(isInsideAgent()) loadCurrentMap();
 
 	if(glutKeyIsDown('w') || glutKeyIsDown('W')){
 		vec3 moveVec = lookAtVector;

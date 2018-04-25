@@ -162,8 +162,8 @@ void initMap(GLuint program){
 void drawSquare(mat4 camMat, mat4 squareTransform){
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "camMatrix"), 1, GL_TRUE, camMat.m);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "mdlMatrix"), 1, GL_TRUE, squareTransform.m);
-	glBindVertexArray(vertexArrayObjID);	// Select VAO
-	glDrawArrays(GL_TRIANGLES, 0, 2*3);	// draw object
+	glBindVertexArray(vertexArrayObjID);
+	glDrawArrays(GL_TRIANGLES, 0, 2*3);
 }
 
 
@@ -196,13 +196,22 @@ void drawPhoneBooth(mat4 camMat, vec3 camPos){
 	DrawModel(phoneBooth,phoneBoothProgram,"inPosition",NULL,"inTexCoord");
 }
 
+
+GLfloat absPro(GLfloat a){
+	return sqrt(pow(a,2));
+}
+
 void drawAgent(mat4 camMat, vec3 camPos){
 	glUseProgram(agentProgram);
 	agentTransform.m[3] = agentPos[0];
 	agentTransform.m[11] = agentPos[2];
 
-	vec3 v = {camPos.x-agentTransform.m[3], camPos.y-agentTransform.m[7], camPos.z-agentTransform.m[11]};
-	mat4 agentRotation = Ry(M_PI+atan(v.x/v.z));
+	vec3 v = {camPos.x-agentTransform.m[3],camPos.y-agentTransform.m[7], camPos.z-agentTransform.m[11]};
+	mat4 agentRotation;
+	if(v.z < 0)
+		agentRotation= Ry(M_PI+atan(v.x/v.z));
+	else
+		agentRotation= Ry(atan(v.x/v.z));
 	mat4 tmpAgentTransform = agentTransform;
 	tmpAgentTransform.m[3] = 0;
  	tmpAgentTransform.m[7] = 0;
@@ -212,10 +221,6 @@ void drawAgent(mat4 camMat, vec3 camPos){
  	tmpAgentTransform.m[7] = agentTransform.m[7];
  	tmpAgentTransform.m[11] = agentTransform.m[11];
 
-
-	/*printf("x: %.2f,", tmpAgentTransform.m[3]);
-	printf("y: %.2f,", tmpAgentTransform.m[7]);
-	printf("z: %.2f\n", tmpAgentTransform.m[11]);*/
 	glUniformMatrix4fv(glGetUniformLocation(agentProgram, "projMatrix"), 1, GL_TRUE, projectionMat.m);
 	glUniformMatrix4fv(glGetUniformLocation(agentProgram, "camMatrix"), 1, GL_TRUE, camMat.m);
 	glUniformMatrix4fv(glGetUniformLocation(agentProgram, "mdlMatrix"), 1, GL_TRUE, tmpAgentTransform.m);
@@ -368,7 +373,6 @@ void readMapFile(char* mapName, mat4 camMatrix){
     int charNum = 0;
     char c = *curLine;
     while(c){
-      //printf("%c \n",c);
 			evalutateChar(c, camMatrix, charNum, lineNum);
 			charNum++;
       c = *(curLine+charNum);
