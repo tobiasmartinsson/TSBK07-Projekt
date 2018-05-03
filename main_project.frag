@@ -72,5 +72,5 @@ void main(void)
 	}
 
 	tex = tex +0.2*tex3 + 0.6*tex2;
-	outColor = vec4(0.0f,1.0f,0.0f,1.0f)*shade*tex;
+	outColor = vec4(0.0f,1.0f,0.0f,1.0f)*tex;
 }
