@@ -1,7 +1,6 @@
 #version 150
 
 out vec4 outColor;
-in vec3 normal_to_frag;
 in vec3 pos_to_fragment;
 in vec2 tex_to_fragment;
 
