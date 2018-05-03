@@ -174,7 +174,7 @@ bool wallCollision(vec3 movementVector){
 }
 
 bool isInsideAgent(){
-	if((agentPos[1] > 0)){
+	if((agentPos[1] > -1) && !freeCam){
 		if(sqrt(pow(cam.x-agentPos[0],2) + pow(cam.z - agentPos[2],2)) < 0.25){
 			return true;
 		}
@@ -230,7 +230,8 @@ bool agentSeesPlayer(GLfloat *agentPos, vec3 playerPos){
 bool isAtEnd(){
 	//Check if the player(camera) is at the end(phoneBooth)
 	if((cam.x - (endPos[0]-0.5) > 0) && (cam.x - (endPos[0] +0.5) < 0) && (cam.z - (endPos[1]-0.5) > 0) && (cam.z -(endPos[1]+0.5) < 0)){
-		return true;
+		if(!freeCam)
+			return true;
 	}
 	return false;
 }
@@ -256,7 +257,7 @@ void loadCurrentMap(){
 }
 
 void tryMoveAgent(){
-	if(!(agentPos[1] > 0)){
+	if((agentPos[1] >= 0)){
 		if(agentSeesPlayer(agentPos, cam)){
 			vec3 agentVec = {agentPos[0],agentPos[1],agentPos[2]};
 			vec3 aToC = Normalize(VectorSub(cam,agentVec));
