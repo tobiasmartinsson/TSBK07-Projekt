@@ -114,7 +114,6 @@ void display(void)
 	modelView = IdentityMatrix();
 	total = Mult(camMatrix, modelView);
 	glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total.m);
-	//glUniformMatrix4fv(glGetUniformLocation(program, "camMatrix"), 1, GL_TRUE, camMatrix.m);
 
 	/*UPDATES LIGHT EVERY SECOND; FLICKERING LIGHTS*/
 	GLfloat t = glutGet(GLUT_ELAPSED_TIME);

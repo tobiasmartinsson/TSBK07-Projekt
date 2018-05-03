@@ -60,6 +60,7 @@ mat4 projectionMat;
 void initMap(GLuint program){
   shaderProgram = program;
 
+	//Load all textures
   LoadTGATextureSimple("number1.tga", &oneTex);
 	LoadTGATextureSimple("number0.tga", &zeroTex);
 	LoadTGATextureSimple("number0kopia.tga", &zeroTex2);
@@ -82,6 +83,7 @@ void initMap(GLuint program){
 	glGenBuffers(1, &vertexBufferObjID);
 	glGenBuffers(1, &groundNormalBufferObjID);
 
+	//Bind textures to texture units
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, oneTex);
 	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit"), 0);
@@ -102,11 +104,10 @@ void initMap(GLuint program){
 	glUniform1i(glGetUniformLocation(shaderProgram, "texUnit13"), 6);
 
 
-	glGenBuffers(1, &groundTexCoordBufferObjID);  //TEXTURE
+	//Bind data for squares
+	glGenBuffers(1, &groundTexCoordBufferObjID);
 
-	// VBO for vertex data
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjID);
-	//glBufferData(GL_ARRAY_BUFFER, 9*sizeof(GLfloat), vertices, GL_STATIC_DRAW);
 	glBufferData(GL_ARRAY_BUFFER, 3*6*sizeof(GLfloat), groundMatrix, GL_STATIC_DRAW);
 	glVertexAttribPointer(glGetAttribLocation(program, "inPosition"), 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(glGetAttribLocation(program, "inPosition"));
@@ -126,15 +127,14 @@ void initMap(GLuint program){
 	glBindTexture(GL_TEXTURE_2D, phoneBoothTex);
 	glUniform1i(glGetUniformLocation(phoneBoothProgram, "texUnit"), 2);
 
+	//Create the different transforms for the differnet square types
 	groundTransform = IdentityMatrix();
-  //groundTransform = Mult(Rx(M_PI/2), groundTransform);
   groundTransform = Mult(T(0,0,0),groundTransform);
 
 	wallTransformB = Mult(Rx(M_PI/2), groundTransform);
   wallTransformB = Mult(T(0,0.5,0.5),wallTransformB);
 
 	wallTransformT = Mult(Ry(M_PI),wallTransformB);
-  //wallTransformB = Mult(T(0,0,1),wallTransformB);
 
   wallTransformR = Mult(Rz(M_PI/2), groundTransform);
 	wallTransformR = Mult(Rx(M_PI/2), wallTransformR);
@@ -143,11 +143,13 @@ void initMap(GLuint program){
 
 	wallTransformL = Mult(Ry(M_PI),wallTransformR);
 
+	//Init som values
 	numOfWalls = 0;
 	startPos[0] = 0;
 	startPos[1] = 0;
 	endPos[0] = 0;
 	endPos[1] = 0;
+
 
 	phoneBoothTransform = IdentityMatrix();
 	phoneBoothTransform = Mult(S(0.004,0.004,0.004),phoneBoothTransform);
@@ -160,6 +162,7 @@ void initMap(GLuint program){
 }
 
 void drawSquare(mat4 camMat, mat4 squareTransform){
+	//Draws a single square("wallpiece" or floor)
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "camMatrix"), 1, GL_TRUE, camMat.m);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "mdlMatrix"), 1, GL_TRUE, squareTransform.m);
 	glBindVertexArray(vertexArrayObjID);
@@ -196,23 +199,22 @@ void drawPhoneBooth(mat4 camMat, vec3 camPos){
 	DrawModel(phoneBooth,phoneBoothProgram,"inPosition",NULL,"inTexCoord");
 }
 
-
-GLfloat absPro(GLfloat a){
-	return sqrt(pow(a,2));
-}
-
 void drawAgent(mat4 camMat, vec3 camPos){
+	//Draws and rotates the agent model towards the player
 	glUseProgram(agentProgram);
 	agentTransform.m[3] = agentPos[0];
 	agentTransform.m[7] = agentPos[1];
 	agentTransform.m[11] = agentPos[2];
 
+	/* Calculate rotation */
 	vec3 v = {camPos.x-agentTransform.m[3],camPos.y-agentTransform.m[7], camPos.z-agentTransform.m[11]};
 	mat4 agentRotation;
 	if(v.z < 0)
 		agentRotation= Ry(M_PI+atan(v.x/v.z));
 	else
 		agentRotation= Ry(atan(v.x/v.z));
+
+	/* --------------*/
 	mat4 tmpAgentTransform = agentTransform;
 	tmpAgentTransform.m[3] = 0;
  	tmpAgentTransform.m[7] = 0;
@@ -231,6 +233,7 @@ void drawAgent(mat4 camMat, vec3 camPos){
 
 
 void reDrawMap(mat4 camMat, vec3 camPos){
+	//Called when map and models is to be redrawn
 	glUseProgram(shaderProgram);
 	int i;
 	GLfloat textureTimer = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
@@ -246,10 +249,10 @@ void reDrawMap(mat4 camMat, vec3 camPos){
 	}
 	drawPhoneBooth(camMat, camPos);
 	drawAgent(camMat, camPos);
-	//drawFloor(camMat);
 }
 
 void generateRandomSequence(){
+	//Generates random number sequence for the 0 and 1 pattern on the walls
 	int i;
 	for(i = 0; i < 64; i++){
 				if(randSign() < 0) wallList[numOfWalls].numberSequence[i] = 0.0f;
@@ -260,6 +263,7 @@ void generateRandomSequence(){
 
 
 void addSquareToMap(mat4 camMatrix, mat4 wallTrans, int x, int z, char wallC){
+	//Adds a square with wallTransform at position (x,z) of type wallC to map
   wallTrans.m[3] += x;
   wallTrans.m[11] += z;
 	wallList[numOfWalls].wallTrans = wallTrans;
