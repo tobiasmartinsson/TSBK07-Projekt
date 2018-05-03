@@ -192,7 +192,7 @@ void drawPhoneBooth(mat4 camMat, vec3 camPos){
 	glUniformMatrix4fv(glGetUniformLocation(phoneBoothProgram, "projMatrix"), 1, GL_TRUE, projectionMat.m);
 	glUniformMatrix4fv(glGetUniformLocation(phoneBoothProgram, "camMatrix"), 1, GL_TRUE, camMat.m);
 	glUniformMatrix4fv(glGetUniformLocation(phoneBoothProgram, "mdlMatrix"), 1, GL_TRUE, phoneBoothTransform.m);
-	glUniform3fv(glGetUniformLocation(shaderProgram, "camPos"),1, &camPos.x);
+	glUniform3fv(glGetUniformLocation(phoneBoothProgram, "camPos"),1, &camPos.x);
 	DrawModel(phoneBooth,phoneBoothProgram,"inPosition",NULL,"inTexCoord");
 }
 

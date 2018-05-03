@@ -257,7 +257,7 @@ void loadCurrentMap(){
 }
 
 void tryMoveAgent(){
-	if(!agentPos[1] > 0){
+	if(!(agentPos[1] > 0)){
 		if(agentSeesPlayer(agentPos, cam)){
 			vec3 agentVec = {agentPos[0],agentPos[1],agentPos[2]};
 			vec3 aToC = Normalize(VectorSub(cam,agentVec));
